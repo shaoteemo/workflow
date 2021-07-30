@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    targetNamespace：可定义自定义类别。也可以在API中操作
+-->
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.activiti.org/processdef">
+    <process id="testEventListener" name="testEventListener" isExecutable="true">
+        <extensionElements>
+            <!--接收所有类型所有的监听-->
+            <activiti:eventListener class="com.shaoteemo.listener.MyEventListener" />
+            <!--delegateExpression为流程引擎定义的bean的名称，也仅仅是这个作用。特定的事件监听-->
+            <activiti:eventListener delegateExpression="${testEventListener}" events="JOB_EXECUTION_SUCCESS,JOB_EXECUTION_FAILURE" />
+
+            <!--实体事件监听器-->
+            <!--接收所有类型实体相关的监听-->
+            <!--
+                entityType值为：
+                    attachment,
+                    comment,
+                    execution,
+                    identity-link,
+                    job,
+                    process-instance,
+                    process-definition,
+                    task
+            -->
+            <activiti:eventListener class="org.activiti.engine.test.MyEventListener" entityType="task" />
+            <!--特定的实体监听-->
+            <activiti:eventListener delegateExpression="${testEventListener}" events="ENTITY_CREATED" entityType="task" />
+        </extensionElements>
+    </process>
+
+</definitions>
+<!--
+    该文件描述监听器在bpmn20.xml和bpmn中的使用方式。
+
+    events，throwEvent 使用非法的值会导致流程部署失败
+-->
