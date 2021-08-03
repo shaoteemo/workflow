@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="错误事件定义演示">
+
+    <!--
+        提示：BPMN20中的错误与Java中的异常完全不同，两者也没有任何关联。
+            BPMN错误事件是一种对业务异常建模的方法。而Java一样有其独有的异常处理方式。
+    -->
+    <process id="error_event" name="errorEvent">
+        <endEvent>
+            <errorEventDefinition errorRef="myError"/>
+        </endEvent>
+    </process>
+</definitions>

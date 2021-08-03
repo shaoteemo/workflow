@@ -4,6 +4,7 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.shaoteemo.listener.MyEventListener;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;
+import org.activiti.engine.runtime.Clock;
 import org.activiti.engine.test.ActivitiRule;
 import org.activiti.spring.SpringAsyncExecutor;
 import org.activiti.spring.SpringProcessEngineConfiguration;
@@ -86,12 +87,24 @@ public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration
         */
 
 //        configuration.setDeploymentMode("single-resource");
-        //部署流程图乱码
-        /* *
+
+        /*
+         * 部署流程图乱码
          * 原因：默认的字符集(Arial)没有对应的中文字符编码
+         *
          */
         configuration.setActivityFontName("宋体");
         configuration.setLabelFontName("宋体");
+
+        /*
+        * 开启任务执行器或异步任务执行器。默认：true
+        * 可用于定时任务，必须开启此项之一。
+        * */
+//        configuration.setAsyncExecutorActivate(true);
+        /*
+        * 设置业务时间及日历格式。默认：GregorianCalendar
+        * */
+//        configuration.setClock();
 
         //关闭Activiti引擎自动生成流程图片
 //        configuration.setCreateDiagramOnDeploy(false);

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器事件定义演示">
+
+    <process id="timer_event" name="timerEvent">
+        <startEvent id="theStart">
+            <!--
+                申明一个定时器事件任务
+                    businessCalendarName：指向流程引擎配置中的业务日历。当省略业务日历时，将使用默认业务日历。
+            -->
+            <timerEventDefinition activiti:businessCalendarName="custom">
+                <documentation>
+                    这里就是一个开始事件的定时器事件的定义
+
+                    定时器事件是由定义的定时器触发的事件。
+                    开始时间、中间事件、边界事件都可以用。该事件的行为取决于使用的日历时间。
+                    每个计时器事件都有一个默认的业务日历，但也可以在计时器事件定义上定义业务日历。
+                </documentation>
+                <!--
+                    定时器定义必须仅包含以下元素之一
+                -->
+                <timeDate>
+                    2011-03-11T12:13:14
+                    <documentation>指定固定日期，何时触发触发器。（格式标准：ISO 8601）</documentation>
+                </timeDate>
+
+                <timeDuration>
+                    P10D
+                    <documentation>指定计时器在触发之前应该运行多长时间。如隔10天后触发（格式标准：ISO 8601）</documentation>
+                </timeDuration>
+
+                <!--
+                    endTime：为该标签的可选属性。当达到该时间后程序将停止创建其他任务。
+                    endTime也可以写在表达式中。如果两个都有被指定则系统默认使用属性的结束时间。
+                -->
+                <timeCycle activiti:endDate="2015-02-25T16:42:11+00:00">
+                    R3/PT10H 或者写成 R3/PT10H/${EndDate}
+                    <documentation>
+                        指定重复执行间隔，多用于定期启动进程或为过期的用户任务发送多个提醒等。
+                        时间周期可以有两种格式：
+                            1.根据ISO 8601标准格式如上所示：R3/PT10H。
+                            2.也可以是CRON表达式每5分钟触发一次，从整小时开始：0 0/5 * * * ?
+                    </documentation>
+                </timeCycle>
+            </timerEventDefinition>
+        </startEvent>
+        <!--
+            通用边界事件定义：
+            以下内容也是一个定时器任务
+        -->
+        <boundaryEvent attachedToRef="firstLineSupport" id="escalationTimer" cancelActivity="true">
+            <timerEventDefinition>
+                <timeDuration>${duration}</timeDuration>
+            </timerEventDefinition>
+        </boundaryEvent>
+    </process>
+</definitions>
+<!--
+    注意：计时器仅在启用作业或异步执行器时触发（即需要在 activiti.cfg.xml 中将 jobExecutorActivate 或 asyncExecutorActivate 设置为 true，
+    因为默认情况下禁用作业和异步执行器）。
+    ps：SpringBoot集成Activiti6 asyncExecutorActivate默认是true？
+-->
