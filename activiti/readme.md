@@ -392,7 +392,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ### 	配置文件详解
 
-​```xml
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     BPMN的根元素
