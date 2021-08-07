@@ -7,22 +7,20 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author shaoteemo
- *
+ * <p>
  * 事件监听器的实现
- *
  */
 @Component
-public class MyEventListener implements ActivitiEventListener
-{
+public class MyEventListener implements ActivitiEventListener {
     /**
      * 事件的捕获
+     *
      * @param event 事件对象
      */
     @Override
-    public void onEvent(ActivitiEvent event)
-    {
+    public void onEvent(ActivitiEvent event) {
         ActivitiEventType type = event.getType();
-        switch (type){
+        switch (type) {
             case JOB_EXECUTION_SUCCESS:
                 System.out.println("一个任务执行完了！");
                 break;
@@ -37,11 +35,11 @@ public class MyEventListener implements ActivitiEventListener
     /**
      * 该方法在onEvent方法抛出异常时的执行。false则表示忽略异常
      * true则抛出异常使对应的方法执行失败
+     *
      * @return
      */
     @Override
-    public boolean isFailOnException()
-    {
+    public boolean isFailOnException() {
         System.out.println("执行任务出错！但是不会影响任务后面的流程。");
         return false;
     }

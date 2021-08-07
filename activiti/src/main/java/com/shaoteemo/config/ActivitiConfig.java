@@ -23,8 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 @Configuration
-public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration
-{
+public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration {
 
     @Autowired
     private MyEventListener listener;
@@ -68,8 +67,7 @@ public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration
     }
 */
     @Bean
-    public SpringProcessEngineConfiguration springProcessEngineConfiguration(SpringAsyncExecutor springAsyncExecutor) throws IOException
-    {
+    public SpringProcessEngineConfiguration springProcessEngineConfiguration(SpringAsyncExecutor springAsyncExecutor) throws IOException {
 
         SpringProcessEngineConfiguration configuration = baseSpringProcessEngineConfiguration
                 (dataSource, getPlatformTransactionManager(), springAsyncExecutor);
@@ -97,13 +95,13 @@ public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration
         configuration.setLabelFontName("宋体");
 
         /*
-        * 开启任务执行器或异步任务执行器。默认：true
-        * 可用于定时任务，必须开启此项之一。
-        * */
+         * 开启任务执行器或异步任务执行器。默认：true
+         * 可用于定时任务，必须开启此项之一。
+         * */
 //        configuration.setAsyncExecutorActivate(true);
         /*
-        * 设置业务时间及日历格式。默认：GregorianCalendar
-        * */
+         * 设置业务时间及日历格式。默认：GregorianCalendar
+         * */
 //        configuration.setClock();
 
         //关闭Activiti引擎自动生成流程图片
@@ -112,8 +110,7 @@ public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration
     }
 
     @Bean
-    public PlatformTransactionManager getPlatformTransactionManager()
-    {
+    public PlatformTransactionManager getPlatformTransactionManager() {
         return new DataSourceTransactionManager(dataSource);
     }
 

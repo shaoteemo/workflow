@@ -12,16 +12,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-@SpringBootApplication(exclude={SecurityAutoConfiguration.class})
+@SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
 @EnableSwagger2
-public class ActivitiApplication
-{
+public class ActivitiApplication {
     @Autowired
     private MyEventListener listener;
 
-    public static void main(String[] args)
-    {
-        SpringApplication.run(ActivitiApplication.class , args);
+    public static void main(String[] args) {
+        SpringApplication.run(ActivitiApplication.class, args);
     }
 
     /*手动部署一个流程*/

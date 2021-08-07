@@ -30,8 +30,7 @@ import java.util.zip.ZipInputStream;
  * @author shaoteemo
  */
 @Service
-public class ActivityServiceImpl implements ActivityService
-{
+public class ActivityServiceImpl implements ActivityService {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -54,10 +53,8 @@ public class ActivityServiceImpl implements ActivityService
     private HistoryService historyService;
 
     @Override
-    public boolean deployBpmnXml(String fileName, String deployName)
-    {
-        try
-        {
+    public boolean deployBpmnXml(String fileName, String deployName) {
+        try {
             this.repository.createDeployment()
                     .name(deployName)
                     .addClasspathResource("processes/" + fileName)
@@ -65,36 +62,29 @@ public class ActivityServiceImpl implements ActivityService
 
             log.info("当前已定义的流程数为：" + repository.createProcessDefinitionQuery().count());
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean deployBpmnXml(String fileName)
-    {
-        try
-        {
+    public boolean deployBpmnXml(String fileName) {
+        try {
             this.repository.createDeployment()
                     .addClasspathResource("processes/" + fileName)
                     .deploy();
 
             log.info("当前已定义的流程数为：" + repository.createProcessDefinitionQuery().count());
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public List<Task> getTaskByUser(String userId)
-    {
+    public List<Task> getTaskByUser(String userId) {
         List<Task> list = this.taskService.createTaskQuery().taskAssignee(userId).list();
         log.info("{}", list);
         return list;
@@ -109,41 +99,32 @@ public class ActivityServiceImpl implements ActivityService
      * @return
      */
     @Override
-    public boolean claimTask(String taskId, String userId)
-    {
-        try
-        {
+    public boolean claimTask(String taskId, String userId) {
+        try {
             //此处应该根据流程实例来获取当前task
 //            String processInstanceId = null;
 //            List<Task> list = this.taskService.createTaskQuery().processInstanceId(processInstanceId).list();
             this.taskService.claim(taskId, userId);
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean addUserToGroup(String userId, String groupId)
-    {
-        try
-        {
+    public boolean addUserToGroup(String userId, String groupId) {
+        try {
             this.identityService.createMembership(userId, groupId);
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public Object createUser(String firstName, String lastName)
-    {
+    public Object createUser(String firstName, String lastName) {
         String id = UUID.randomUUID().toString();
         User user = this.identityService.newUser(id);
         user.setFirstName(firstName);
@@ -154,8 +135,7 @@ public class ActivityServiceImpl implements ActivityService
     }
 
     @Override
-    public Object createGroup(String groupName)
-    {
+    public Object createGroup(String groupName) {
         String id = UUID.randomUUID().toString();
         Group group = this.identityService.newGroup(id);
         group.setName(groupName);
@@ -164,10 +144,8 @@ public class ActivityServiceImpl implements ActivityService
     }
 
     @Override
-    public boolean deployBpmnXmlAndImg(String xmlFile, String image, String deployName)
-    {
-        try
-        {
+    public boolean deployBpmnXmlAndImg(String xmlFile, String image, String deployName) {
+        try {
             this.repository.createDeployment()
                     //部署名称
                     .name(deployName)
@@ -179,62 +157,49 @@ public class ActivityServiceImpl implements ActivityService
             DeploymentQuery deploymentQuery = this.repository.createDeploymentQuery().deploymentName(deployName);
             log.info("流程[" + deployName + "]部署成功!ID为：" + deploymentQuery.singleResult().getId());
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean deployBpmnZip(String zipFile)
-    {
-        try
-        {
+    public boolean deployBpmnZip(String zipFile) {
+        try {
             this.repository.createDeployment()
                     .addZipInputStream(new ZipInputStream(new FileInputStream(zipFile), StandardCharsets.UTF_8))
                     .deploy();
             log.info("当前已定义的流程数为：" + repository.createProcessDefinitionQuery().count());
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean deployBpmnModel(String resourceName, BpmnModel model)
-    {
-        try
-        {
+    public boolean deployBpmnModel(String resourceName, BpmnModel model) {
+        try {
             this.repository.createDeployment()
                     .addBpmnModel(resourceName, model)
                     .deploy();
             log.info("当前已定义流程数为：" + this.repository.createProcessDefinitionQuery().count());
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public ProcessDefinition getProcessDefinitionByDeployId(String deployId)
-    {
+    public ProcessDefinition getProcessDefinitionByDeployId(String deployId) {
 
         return this.repository.createProcessDefinitionQuery().deploymentId(deployId).singleResult();
     }
 
     @Override
-    public boolean startProcessById(String processId, Map<String, Object> variables)
-    {
-        try
-        {
+    public boolean startProcessById(String processId, Map<String, Object> variables) {
+        try {
             if (processId == null || processId.trim().equals("")) return false;
             /*
              * 该API会通过部署xml在数据库生成的ID进行部署。格式大致为key:version:id
@@ -243,59 +208,45 @@ public class ActivityServiceImpl implements ActivityService
             log.info("实例ID：" + processInstance.getProcessInstanceId());
             log.info("当前启动的流程实例数量为：" + runtimeService.createProcessInstanceQuery().count());
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public Object getTaskListCandidateUser(String userName)
-    {
-        try
-        {
-            if (StringUtils.hasLength(userName))
-            {
+    public Object getTaskListCandidateUser(String userName) {
+        try {
+            if (StringUtils.hasLength(userName)) {
                 List<Task> list = this.taskService.createTaskQuery().taskCandidateUser(userName).list();
                 return list;
             }
             return new ArrayList<>();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
     @Override
-    public Object getTaskListCandidateGroup(String group)
-    {
-        try
-        {
-            if (StringUtils.hasLength(group))
-            {
+    public Object getTaskListCandidateGroup(String group) {
+        try {
+            if (StringUtils.hasLength(group)) {
 
                 List<Task> list = this.taskService.createTaskQuery().taskCandidateGroup(group).list();
                 log.info("{}", list);
                 return list;
             }
             return new ArrayList<>();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
     @Override
-    public boolean startProcess(String processKey, Map<String, Object> variables)
-    {
-        try
-        {
+    public boolean startProcess(String processKey, Map<String, Object> variables) {
+        try {
             if (processKey == null || processKey.trim().equals("")) return false;
             /*
              * 该API会通过bpmn20流程定义xml的id进行部署。详细见[ActivityBpmn20.bpmn20.xml]
@@ -308,17 +259,14 @@ public class ActivityServiceImpl implements ActivityService
             log.info("实例ID：" + processInstance.getProcessInstanceId());
             log.info("当前启动的流程实例数量为：" + runtimeService.createProcessInstanceQuery().count());
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public InputStream getProcessImageResource(String processKey)
-    {
+    public InputStream getProcessImageResource(String processKey) {
         ProcessDefinition processDefinition = this.repository.createProcessDefinitionQuery()
                 .processDefinitionKey(processKey)
                 .singleResult();
@@ -332,134 +280,113 @@ public class ActivityServiceImpl implements ActivityService
      * @return
      */
     @Override
-    public Object getAllTaskForManagement()
-    {
+    public Object getAllTaskForManagement() {
         return this.taskService.createTaskQuery().taskCandidateGroup("management").list().stream().map(TaskInfo::getName).collect(Collectors.toList());
     }
 
     @Override
-    public Object getCurrentTaskByInstanceId(String instId)
-    {
+    public Object getCurrentTaskByInstanceId(String instId) {
         List<Task> list = this.taskService.createTaskQuery().processInstanceId(instId).list();
-        log.info("{}" , list);
+        log.info("{}", list);
         return list;
 //                .stream().map(TaskInfo::getName).collect(Collectors.toList());
     }
 
     /**
      * 某些条件下完成任务并不会判断当前人是否符合条件
+     *
      * @param taskId
      * @param variables
      * @return
      */
     @Override
-    public boolean completeTaskByTaskId(String taskId, Map<String, Object> variables)
-    {
-        try
-        {
+    public boolean completeTaskByTaskId(String taskId, Map<String, Object> variables) {
+        try {
             if (CollectionUtils.isEmpty(variables))
                 this.taskService.complete(taskId);
             else
                 this.taskService.complete(taskId, variables);
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public Object completeTask(String instanceId, Map<String, Object> variables)
-    {
+    public Object completeTask(String instanceId, Map<String, Object> variables) {
 
-        try
-        {
-            if (!processIsShutdown(instanceId))
-            {
+        try {
+            if (!processIsShutdown(instanceId)) {
                 List<Task> task = this.taskService.createTaskQuery().processInstanceId(instanceId).list();
                 this.taskService.complete(task.get(0).getId(), variables);
             }
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean processIsShutdown(String instanceId)
-    {
+    public boolean processIsShutdown(String instanceId) {
         ProcessInstance processInstance = this.runtimeService.createProcessInstanceQuery().processInstanceId(instanceId).singleResult();
         return processInstance == null;
     }
 
     @Override
-    public Map<String, Object> getProcessInstanceEndInfo(String processInstanceId)
-    {
-        Map<String , Object> variables = new HashMap<>();
+    public Map<String, Object> getProcessInstanceEndInfo(String processInstanceId) {
+        Map<String, Object> variables = new HashMap<>();
         HistoricProcessInstance historyInstance = this.historyService.createHistoricProcessInstanceQuery()
                 .processInstanceId(processInstanceId)
                 .singleResult();
-        if (historyInstance == null ) return null;
-        variables.put("流程ID：",historyInstance.getId());
-        variables.put("流程定义ID：",historyInstance.getProcessDefinitionId());
-        variables.put("流程部署ID：",historyInstance.getDeploymentId());
-        variables.put("发起人：",historyInstance.getStartUserId());
-        variables.put("开始时间：",historyInstance.getStartTime());
-        variables.put("结束时间：",historyInstance.getEndTime());
+        if (historyInstance == null) return null;
+        variables.put("流程ID：", historyInstance.getId());
+        variables.put("流程定义ID：", historyInstance.getProcessDefinitionId());
+        variables.put("流程部署ID：", historyInstance.getDeploymentId());
+        variables.put("发起人：", historyInstance.getStartUserId());
+        variables.put("开始时间：", historyInstance.getStartTime());
+        variables.put("结束时间：", historyInstance.getEndTime());
 
         return variables;
     }
 
     @Override
-    public boolean suspendProcessByKey(String processKey)
-    {
-        try
-        {
+    public boolean suspendProcessByKey(String processKey) {
+        try {
             this.repository.suspendProcessDefinitionById(processKey);
             return true;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean suspendInstanceById(String instanceId)
-    {
+    public boolean suspendInstanceById(String instanceId) {
         this.runtimeService.suspendProcessInstanceById(instanceId);
         return true;
     }
 
     @Override
-    public boolean processIsSuspend(String processKey)
-    {
+    public boolean processIsSuspend(String processKey) {
         return this.repository.isProcessDefinitionSuspended(processKey);
     }
 
     @Override
-    public boolean processInstanceIsSuspend(String instanceId)
-    {
+    public boolean processInstanceIsSuspend(String instanceId) {
         ProcessInstance suspended = this.runtimeService.createProcessInstanceQuery().processInstanceId(instanceId).suspended().singleResult();
         return suspended.isSuspended();
     }
 
     @Override
-    public boolean activateProcessByKey(String processKey)
-    {
+    public boolean activateProcessByKey(String processKey) {
         this.repository.activateProcessDefinitionById(processKey);
         return true;
     }
 
     @Override
-    public boolean activateProcessInstanceById(String instanceId)
-    {
+    public boolean activateProcessInstanceById(String instanceId) {
         this.runtimeService.activateProcessInstanceById(instanceId);
         return true;
     }

@@ -1,7 +1,6 @@
 package com.shaoteemo.service;
 
-public interface ActivitySystemService
-{
+public interface ActivitySystemService {
 
     boolean shutdownProcessEngine();
 

@@ -13,33 +13,32 @@ import javax.annotation.Resource;
  * Activity Core
  */
 @Service
-public class ActivitySystemServiceImpl implements ActivitySystemService
-{
+public class ActivitySystemServiceImpl implements ActivitySystemService {
     /*获取默认的流程引擎*/
     @Resource
     private ProcessEngine processEngine /*= ProcessEngines.getDefaultProcessEngine()*/;
 
     /*
-    *
-    * 用于启动流程定义的新的流程实例
-	*
-    * */
+     *
+     * 用于启动流程定义的新的流程实例
+     *
+     * */
     @Resource
     private RuntimeService runtimeService /*= processEngine.getRuntimeService()*/;
 
     /*
-    *
-	* 提供管理、操作部署和流程定义的操作（流程定义是 BPMN 2.0 流程的 Java 副本）
-	*
-    * */
+     *
+     * 提供管理、操作部署和流程定义的操作（流程定义是 BPMN 2.0 流程的 Java 副本）
+     *
+     * */
     @Resource
     private RepositoryService repositoryService /*= processEngine.getRepositoryService()*/;
 
     /*
-    *
-    * 提供任务的获取查询。任务创建。并完成任务。
-    *
-    * */
+     *
+     * 提供任务的获取查询。任务创建。并完成任务。
+     *
+     * */
     @Resource
     private TaskService taskService /*= processEngine.getTaskService()*/;
 
@@ -63,52 +62,46 @@ public class ActivitySystemServiceImpl implements ActivitySystemService
 //    private DynamicBpmnService dynamicBpmnService = processEngine.getDynamicBpmnService();
 
     /*独立的引擎可以通过内部的初始化或销毁正常启动销毁流程引擎*/
-    public void processEngineInitAndDestroy(){
+    public void processEngineInitAndDestroy() {
         /*手动初始化流程引擎
-        * 初始化时会加载activiti.cfg.xml和activiti-context.xml配置文件并初始话ProcessEngine
-        * */
+         * 初始化时会加载activiti.cfg.xml和activiti-context.xml配置文件并初始话ProcessEngine
+         * */
         ProcessEngines.init();
         //手动销毁流程引擎
         ProcessEngines.destroy();
     }
 
     @Override
-    public boolean startProcessEngine()
-    {
+    public boolean startProcessEngine() {
         ProcessEngines.init();
         return ProcessEngines.isInitialized();
     }
 
     @Override
-    public boolean restartProcessEngine()
-    {
+    public boolean restartProcessEngine() {
         shutdownProcessEngine();
         startProcessEngine();
         return ProcessEngines.isInitialized();
     }
 
     @Override
-    public Object queryDeploymentProcessCount()
-    {
+    public Object queryDeploymentProcessCount() {
         return this.repositoryService.createProcessDefinitionQuery().count();
     }
 
     @Override
-    public Object queryStartedProcessInstance()
-    {
+    public Object queryStartedProcessInstance() {
         return this.runtimeService.createProcessInstanceQuery().count();
     }
 
     @Override
-    public boolean shutdownProcessEngine()
-    {
+    public boolean shutdownProcessEngine() {
         ProcessEngines.destroy();
         return ProcessEngines.isInitialized();
     }
 
     @Override
-    public boolean processEngineStatus()
-    {
+    public boolean processEngineStatus() {
         return ProcessEngines.isInitialized();
     }
 }

@@ -11,28 +11,27 @@ import java.util.Map;
 /**
  * @author shaoteemo
  */
-public interface ActivityService
-{
+public interface ActivityService {
     /*部署Classpath:/processes/下的流程文件*/
-    boolean deployBpmnXml(String fileName , String deployName);
+    boolean deployBpmnXml(String fileName, String deployName);
 
     /*部署Classpath:/processes/下的流程文件*/
     boolean deployBpmnXml(String fileName);
 
     /*部署Classpath:/processes/下的流程文件和流程图文件*/
-    boolean deployBpmnXmlAndImg(String xmlFile , String image , String deployName);
+    boolean deployBpmnXmlAndImg(String xmlFile, String image, String deployName);
 
     /*部署Zip包流程*/
     boolean deployBpmnZip(String zipFile);
 
     /*部署BPMN Model*/
-    boolean deployBpmnModel(String resourceName , BpmnModel model);
+    boolean deployBpmnModel(String resourceName, BpmnModel model);
 
     /*根据流程Key开启一个流程实例*/
-    boolean startProcess(String processKey , Map<String , Object> variables);
+    boolean startProcess(String processKey, Map<String, Object> variables);
 
     /*根据流程部署的ID启动流程实例*/
-    boolean startProcessById(String processId , Map<String , Object> variables);
+    boolean startProcessById(String processId, Map<String, Object> variables);
 
     /*根据流程Key获取部署的图片流*/
     InputStream getProcessImageResource(String processKey);
@@ -47,7 +46,7 @@ public interface ActivityService
     Object getCurrentTaskByInstanceId(String instId);
 
     /*完成流程实例当前任务*/
-    Object completeTask(String instanceId , Map<String , Object> variables);
+    Object completeTask(String instanceId, Map<String, Object> variables);
 
     /*流程实例是否结束*/
     boolean processIsShutdown(String instanceId);
@@ -80,13 +79,13 @@ public interface ActivityService
     Object createGroup(String groupName);
 
     /*创建一个用户*/
-    Object createUser(String firstName , String lastName);
+    Object createUser(String firstName, String lastName);
 
     /*将一个用户添加至一个组*/
-    boolean addUserToGroup(String userId , String groupId);
+    boolean addUserToGroup(String userId, String groupId);
 
     /*领取任务*/
-    boolean claimTask(String taskId , String userId);
+    boolean claimTask(String taskId, String userId);
 
     /*根据用户ID获取当前的用户任务*/
     List<Task> getTaskByUser(String userId);
@@ -95,5 +94,5 @@ public interface ActivityService
     boolean completeTaskByTaskId(String taskId, Map<String, Object> variables);
 
     /*通过历史记录来验证当前流程是否结束*/
-    Map<String , Object> getProcessInstanceEndInfo(String processInstanceId);
+    Map<String, Object> getProcessInstanceEndInfo(String processInstanceId);
 }
