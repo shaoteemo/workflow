@@ -37,7 +37,7 @@ public class SignalEventImpl implements SignalEvent {
             this.runtimeService.signalEventReceived(signalName);
         else
             this.runtimeService.signalEventReceived(signalName, executionId[0]);
-        return null;
+        return true;
     }
 }
 
@@ -52,7 +52,7 @@ interface SignalEvent {
     Object querySignalEvent(String signalName);
 
     /**
-     * 通知接受获取信号消息
+     * 通知接受获取信号消息（触发信号）
      *
      * @param signalName  信号名称
      * @param executionId 执行器ID（可选）

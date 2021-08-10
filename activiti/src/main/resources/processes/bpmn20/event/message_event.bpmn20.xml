@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息事件定义演示">
+
+    <!--DocumentUrl:https://www.activiti.org/userguide/#bpmnMessageEventDefinition-->
+
+    <!--
+        消息事件是引用命名消息的事件。消息具有名称和有效载荷。
+        与信号不同，消息事件总是针对单个接收者。
+    -->
+
+    <!--消息声明-->
+    <message id="newInvoice" name="newInvoiceMessage"/>
+    <message id="payment" name="paymentMessage"/>
+
+    <process id="message_event" name="messageEvent">
+        <startEvent id="messageStart">
+            <documentation>这是一个消息开始事件</documentation>
+            <!--消息定义-->
+            <messageEventDefinition messageRef="newInvoice"/>
+        </startEvent>
+        <!--...-->
+        <intermediateCatchEvent id="paymentEvt">
+            <documentation>这是一个捕获消息事件</documentation>
+            <messageEventDefinition messageRef="payment"/>
+        </intermediateCatchEvent>
+        <!--...-->
+    </process>
+</definitions>
+<!--
+    关联的Java: com.shaoteemo.bpmn.MessageEventImpl
+-->

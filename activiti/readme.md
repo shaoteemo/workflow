@@ -392,7 +392,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ### 	配置文件详解
 
-```xml
+​```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     BPMN的根元素
@@ -527,9 +527,10 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 	2.抛出：通过填充黑色的内部图标在视觉上与捕获事件区分开来。
 ```
 
+#### 1.定时器事件（TimerEventDefinition）
+
 ```xml
-1.定时器事件定义
-	<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <definitions
         xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
         xmlns:activiti="http://activiti.org/bpmn"
@@ -601,8 +602,9 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 -->
 ```
 
+#### 2.错误事件（ErrorEventDefinition）
+
 ```xml
-2.错误事件定义
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions
         xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -628,4 +630,103 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ```
 
-​		
+#### 3.信号事件（SignalEventDefinition）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号事件定义演示">
+<!--documentUrl:https://www.activiti.org/userguide/#bpmnSignalEventDefinitionQuery-->
+    <!--
+        声明信号
+         activiti:scope:配置信号作用范围默认为“global”。（非BPMN2.0标准！）
+    -->
+    <signal id="alertSignal" name="alert" activiti:scope="processInstance">
+        <documentation>
+            信号事件是引用命名的信号事件。
+        </documentation>
+    </signal>
+    <process id="signal_event" name="signalEvent">
+        <intermediateThrowEvent id="throwSignalEvent" name="Alert">
+            <documentation>抛出事件信号定义</documentation>
+            <!--
+                信号事件定义。
+                signalRef：值为声明的信号元素。
+            -->
+            <signalEventDefinition signalRef="alertSignal" />
+        </intermediateThrowEvent>
+        <!--.....-->
+        <intermediateCatchEvent id="catchSignalEvent" name="On Alert">
+            <documentation>捕获事件信号定义</documentation>
+            <signalEventDefinition signalRef="alertSignal"/>
+        </intermediateCatchEvent>
+        <!--.....-->
+    </process>
+</definitions>
+<!--
+    本Xml涉及少量的Java代码：SignalEventImpl.java
+
+    信号事件作用域范围
+        默认情况下，信号广播范围为整个引擎。因此如果在某个流程实例中抛出一个信号事件，
+        其他具有不同流程定义的流程实例可以对这个事件触发做出反应。
+
+        然而在某些情况下我们只希望对同一流程实例中的信号事件做出反应。
+            eg.一个用例是流程实例中使用同步机制，如过两个或多个活动互斥。
+-->
+<!--
+    一些本节中出现的标记文字描述
+        MessageStartEvent：消息开始事件，一个圆⚪中间一个信封✉图标
+
+-->
+```
+
+#### 4.消息事件（MeaasgeEventDefinition）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息事件定义演示">
+    <!--DocumentUrl:https://www.activiti.org/userguide/#bpmnMessageEventDefinition-->
+    <!--
+        消息事件是引用命名消息的事件。消息具有名称和有效载荷。
+        与信号不同，消息事件总是针对单个接收者。
+    -->
+    <!--消息声明-->
+    <message id="newInvoice" name="newInvoiceMessage"/>
+    <message id="payment" name="paymentMessage"/>
+
+    <process id="message_event" name="messageEvent">
+        <startEvent id="messageStart">
+            <documentation>这是一个消息开始事件</documentation>
+            <!--消息定义-->
+            <messageEventDefinition messageRef="newInvoice"/>
+        </startEvent>
+        <!--...-->
+        <intermediateCatchEvent id="paymentEvt">
+            <documentation>这是一个捕获消息事件</documentation>
+            <messageEventDefinition messageRef="payment"/>
+        </intermediateCatchEvent>
+        <!--...-->
+    </process>
+</definitions>
+<!--
+    关联的Java: com.shaoteemo.bpmn.MessageEventImpl
+-->
+```
+

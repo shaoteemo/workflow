@@ -9,9 +9,12 @@
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
         targetNamespace="信号事件定义演示">
-
-    <!--声明信号-->
-    <signal id="alertSignal" name="alert">
+<!--documentUrl:https://www.activiti.org/userguide/#bpmnSignalEventDefinitionQuery-->
+    <!--
+        声明信号
+         activiti:scope:配置信号作用范围默认为“global”。（非BPMN2.0标准！）
+    -->
+    <signal id="alertSignal" name="alert" activiti:scope="processInstance">
         <documentation>
             信号事件是引用命名的信号事件。
         </documentation>
@@ -40,4 +43,17 @@
 </definitions>
 <!--
     本Xml涉及少量的Java代码：SignalEventImpl.java
+
+    信号事件作用域范围
+        默认情况下，信号广播范围为整个引擎。因此如果在某个流程实例中抛出一个信号事件，
+        其他具有不同流程定义的流程实例可以对这个事件触发做出反应。
+
+        然而在某些情况下我们只希望对同一流程实例中的信号事件做出反应。
+            eg.一个用例是流程实例中使用同步机制，如过两个或多个活动互斥。
+-->
+
+<!--
+    一些本节中出现的标记文字描述
+        MessageStartEvent：消息开始事件，一个圆⚪中间一个信封✉图标
+
 -->
