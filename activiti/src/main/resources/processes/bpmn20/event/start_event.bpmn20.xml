@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="开始事件演示">
+<!--
+    开始时间指示流程开始的位置
+        启动事件的类型（进程在消息到达时启动，在特定的时间间隔等），
+        定义流程的启动方式在事件的可视化表示中显示为一个小图标（timer_event.xml\message_event.xml等）。
+
+    事件总是为捕获事件：概念上，事件是（在任何时候）等待某个触发器发生。
+
+-->
+    <process id="start_event" name="startEvent">
+        <!--
+            initiator:标识在进程启动时将存储经过身份验证的用户ID的变量名称。
+        -->
+        <startEvent id="request" activiti:initiator="initiator"/>
+    </process>
+</definitions>
+<!--关联的Java:com.shaoteemo.bpmn.StartEventImpl-->

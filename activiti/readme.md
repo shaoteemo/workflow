@@ -152,8 +152,8 @@ true：默认值。activiti会对数据库中所有表进行更新操作。如�
 create_drop：在activiti启动时创建表，在关闭时删除表（必须手动关闭	引擎，才能删除表）。（单元测试常用）
 drop-create：在activiti启动时删除原来的旧表，然后在创建新表（不需	要手动关闭引擎）。
 databaseSchema：
-isDbIdentityUsed（true）：是否启用数据库标识
-isDbHistoryUsed（true）：是否使用数据库历史记录
+isDbIdentityUsed（true）：是否启用数据库认证用户表
+isDbHistoryUsed（true）：是否启用数据库历史记录表
 historyLevel(audit)：历史记录级别none、activity、audit、full
 processDefinitionLocationPrefix（"classpath:/processes/"）：流程文件定义位置前缀
 processDefinitionLocationSuffixes("\*\*.bpmn20.xml", "\*\*.bpmn")：流程文件定义位置后缀
@@ -729,4 +729,38 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
     关联的Java: com.shaoteemo.bpmn.MessageEventImpl
 -->
 ```
+
+#### 5.开始事件（StartEvents）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="开始事件演示">
+<!--
+    开始时间指示流程开始的位置
+        启动事件的类型（进程在消息到达时启动，在特定的时间间隔等），
+        定义流程的启动方式在事件的可视化表示中显示为一个小图标（timer_event.xml\message_event.xml等）。
+
+    事件总是为捕获事件：概念上，事件是（在任何时候）等待某个触发器发生。
+
+-->
+    <process id="start_event" name="startEvent">
+        <!--
+            initiator:标识在进程启动时将存储经过身份验证的用户ID的变量名称。
+        -->
+        <startEvent id="request" activiti:initiator="initiator"/>
+    </process>
+</definitions>
+<!--关联的Java:com.shaoteemo.bpmn.StartEventImpl-->
+```
+
+#### 6.空开始事件（None Start Event）常用的一个事件
 
