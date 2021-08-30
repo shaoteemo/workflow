@@ -225,6 +225,8 @@ ENTITY_SUSPENDED, ENTITY_ACTIVATED: ProcessDefinition, ProcessInstance/Execution
 
 ### ProcessEngineAPI&Service
 
+![](http://rep.shaoteemo.com/activiti/api.services.png)
+
 ```java
 |--ProcessEngineConfiguration  <-- activiti.cfg.xml
 	|--ProcessEngine
