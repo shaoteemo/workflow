@@ -12,7 +12,7 @@
 
 ### Pom.xml
 
-​	**本文全程使用SpringBoot进行**
+**本文全程使用SpringBoot进行**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -109,7 +109,7 @@ public class ActivitiApplication
 }
 ```
 
-​		说明：SpringBoot整合Activiti时启动会出现Could not find class [org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration]异常（目前原因未知）。因此需要exclude掉该类的自动配置。
+说明：SpringBoot整合Activiti时启动会出现Could not find class [org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration]异常（目前原因未知）。因此需要exclude掉该类的自动配置。
 
 ### 流程引擎配置类ProcessEngineConfiguration关系图谱
 
@@ -130,7 +130,7 @@ public class ActivitiApplication
 ④测试时使用。内存数据库使用默认H2.
 ```
 
-​	org.activiti.spring.boot.AbstractProcessEngineAutoConfiguration用于集成SpringBoot
+org.activiti.spring.boot.AbstractProcessEngineAutoConfiguration用于集成SpringBoot
 
 ### ActivitiProperties配置介绍(常用配置)
 
@@ -166,7 +166,7 @@ customMybatisXMLMappers:
 
 ### 数据库配置项
 
-​		**本文全程使用MySQL数据库，推荐使用MySQL数据库版本为5.6.4+**
+**本文全程使用MySQL数据库，推荐使用MySQL数据库版本为5.6.4+**
 
 1. Activity默认初始表简介：
 
@@ -182,11 +182,11 @@ customMybatisXMLMappers:
 
 ### JobExcutor作业执行器
 
-​	documentUrl：https://www.activiti.org/userguide/#jobExecutorConfiguration
+documentUrl：https://www.activiti.org/userguide/#jobExecutorConfiguration
 
 ### 流程部署缓存配置及日志
 
-​	documentUrl：https://www.activiti.org/userguide/#processDefinitionCacheConfiguration
+documentUrl：https://www.activiti.org/userguide/#processDefinitionCacheConfiguration
 
 ### 事件监听器
 
@@ -211,7 +211,7 @@ documentUrl：https://www.activiti.org/userguide/#_listeners_throwing_bpmn_event
 docUrl:https://www.activiti.org/userguide/#eventDispatcherEventTypes
 ```
 
-​	所有的已 ENTITY_\\*相关的都与实体事件相关
+所有的已 ENTITY_\\*相关的都与实体事件相关
 
 ```
 ENTITY_CREATED, ENTITY_INITIALIZED, ENTITY_DELETED: Attachment, Comment, Deployment, Execution, Group, IdentityLink, Job, Model, ProcessDefinition, ProcessInstance, Task, User.
@@ -237,7 +237,7 @@ ENTITY_SUSPENDED, ENTITY_ACTIVATED: ProcessDefinition, ProcessInstance/Execution
 		|--HistoryService ⑦
 ```
 
-​		ProcessEngines.getDefaultProcessEngine()获取默认的流程引擎
+ProcessEngines.getDefaultProcessEngine()获取默认的流程引擎
 
 ```
 1.ProcessEngines是线程安全的。
@@ -245,7 +245,7 @@ ENTITY_SUSPENDED, ENTITY_ACTIVATED: ProcessDefinition, ProcessInstance/Execution
 3.所有的服务都是无状态的，即使是在分布式的环境中不同的Activiti服务操作的都是同一个数据库，因此任意服务调用都是幂等的。
 ```
 
-​	类说明解析
+类说明解析
 
 ```
 ①RepositoryService：官方说：“这可能是使用Activiti需要的第一个服务”
@@ -286,7 +286,7 @@ ENTITY_SUSPENDED, ENTITY_ACTIVATED: ProcessDefinition, ProcessInstance/Execution
 
 ### 异常策略
 
-​	来源于一个基本的org.activiti.engine.ActivitiException非检查时异常
+来源于一个基本的org.activiti.engine.ActivitiException非检查时异常
 
 ```java
 //部分常见的异常类型
@@ -517,7 +517,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ## BPMN2.0详解
 
-​		写在前面：介绍Activiti支持的BPMN20构造以及对BPMN标准的自定义扩展
+写在前面：介绍Activiti支持的BPMN20构造以及对BPMN标准的自定义扩展
 
 ### 		Events
 
@@ -764,6 +764,8 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 #### 6.空开始事件（None Start Event）常用的一个事件
 
+![空开始事件](http://rep.shaoteemo.com/activiti/bpmn.none.start.event.png)
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions
@@ -798,7 +800,117 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ```
 
-#### 7.定时器启动事件（Timer Start Event）
+#### 7.定时器启动事件（Timer Start Event)
 
-图片示例：![定时器图片样式](http://rep.shaoteemo.com/activiti/bpmn.clock.start.event.png)
+![定时器图片样式](http://rep.shaoteemo.com/activiti/bpmn.clock.start.event.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器启动事件演示">
+
+    <!--
+        计时器启动事件用于在给定时间创建流程实例。既可以用于一次启动流程，也可以在某一事件间隔启动多次流程。
+
+        NOTE：
+            1.子流程不能有计时器启动事件。
+            2.流程部署会立即安排启动计时器事件。不需要调用RuntimeService中的启动API就会自动根据条件启动。
+
+        定时器启动事件的 XML 表示是普通的启动事件声明，带有定时器定义子元素.
+
+    -->
+    <process id="timer_start_event" name="timerStartEvent">
+        <!--示例1：流程将从2011年3月11日12:13开始，以5分钟为间隔启动4次-->
+        <startEvent id="theStartExample1">
+            <timerEventDefinition>
+                <timeCycle>R4/2011-03-11T12:13/PT5M</timeCycle>
+            </timerEventDefinition>
+        </startEvent>
+
+        <!--示例：进程将在选定日期开始一次-->
+        <startEvent id="theStartExample2">
+            <timerEventDefinition>
+                <timeDate>2088-09-01T00:00:00</timeDate>
+            </timerEventDefinition>
+        </startEvent>
+    </process>
+</definitions>
+
+```
+
+#### 8.消息开始事件（Message Start Event）
+
+![](http://rep.shaoteemo.com/activiti/bpmn.start.message.event.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息启动事件演示">
+
+    <!--
+        消息启动事件：可用于使用命名消息启动流程实例。有效地让我们使用消息名称从一组备选启动事件中选择符合条件的事件启动。
+
+        使用一个或多个消息启动事件部署流程定义时，应注意以下事项：
+            1.消息启动事件的名称在给定的流程定义中必须是唯一的。流程定义不能有多个同名的消息启动事件,否则
+              Activiti 在部署流程定义时抛出异常，如果两个及以上的消息启动事件引用具有相同消息名称的消息，
+              则两个或多个消息启动事件引用相同的消息。
+
+            2.消息启动事件的名称在所有部署的流程定义中必须是唯一的，否则，Activiti 在部署流程定义时抛出异常，
+              使得一个及以上的消息启动事件引用由不同流程定义部署的消息启动事件同名的消息。
+
+            3.流程版本控制：在部署流程定义的新版本时，将取消先前版本的消息订阅。对于新版本中不存在的消息事件也是如此。
+
+        启动对应的流程实例API方式见：Java: com.shaoteemo.bpmn.MessageEventImpl
+
+            *JavaAPI中的传入属性messageName：是在 messageEventDefinition 的 messageRef 属性引用的消息元素的 name 属性中给出的名称。
+
+            启动流程实例时，注意事项：
+                1.消息启动事件仅在主流程上受支持。嵌入式子流程不支持消息启动事件。
+
+                2.如果流程定义有多个消息启动事件，runtimeService.startProcessInstanceByMessage(…)允许选择适当的启动事件。
+
+                3.如果流程定义有多个消息启动事件和一个无启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(…)使用无启动事件启动流程实例。
+
+                4.如果流程定义有多个消息启动事件并且没有无启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(… )会抛出异常。
+
+                5.如果流程定义具有单个消息启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(… )会使用消息启动事件启动一个新的流程实例。
+
+                6.如果流程是以活动调用方式启动的，则仅在以下情况下才支持消息启动事件
+                    6.1.除了消息开始事件之外，流程还有一个无开始事件
+                    6.2.该流程只有一个消息启动事件，没有其他启动事件。
+
+    -->
+
+    <message id="newInvoice" name="newInvoiceMessage" />
+
+    <process id="message_start_event" name="messageStartEvent">
+        <startEvent id="messageStart" >
+            <messageEventDefinition messageRef="newInvoice"/>
+        </startEvent>
+    </process>
+</definitions>
+```
+
+#### 9.信号开始事件（Signal Start Event）
+
+![](http://rep.shaoteemo.com/activiti/bpmn.start.signal.event.png)
 

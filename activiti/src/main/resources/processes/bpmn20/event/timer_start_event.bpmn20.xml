@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器启动事件演示">
+
+    <!--
+        计时器启动事件用于在给定时间创建流程实例。既可以用于一次启动流程，也可以在某一事件间隔启动多次流程。
+
+        NOTE：
+            1.子流程不能有计时器启动事件。
+            2.流程部署会立即安排启动计时器事件。不需要调用RuntimeService中的启动API就会自动根据条件启动。
+
+        定时器启动事件的 XML 表示是普通的启动事件声明，带有定时器定义子元素.
+
+    -->
+    <process id="timer_start_event" name="timerStartEvent">
+        <!--示例1：流程将从2011年3月11日12:13开始，以5分钟为间隔启动4次-->
+        <startEvent id="theStartExample1">
+            <timerEventDefinition>
+                <timeCycle>R4/2011-03-11T12:13/PT5M</timeCycle>
+            </timerEventDefinition>
+        </startEvent>
+
+        <!--示例：进程将在选定日期开始一次-->
+        <startEvent id="theStartExample2">
+            <timerEventDefinition>
+                <timeDate>2088-09-01T00:00:00</timeDate>
+            </timerEventDefinition>
+        </startEvent>
+    </process>
+</definitions>

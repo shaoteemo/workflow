@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息启动事件演示">
+
+    <!--
+        消息启动事件：可用于使用命名消息启动流程实例。有效地让我们使用消息名称从一组备选启动事件中选择符合条件的事件启动。
+
+        使用一个或多个消息启动事件部署流程定义时，应注意以下事项：
+            1.消息启动事件的名称在给定的流程定义中必须是唯一的。流程定义不能有多个同名的消息启动事件,否则
+              Activiti 在部署流程定义时抛出异常，如果两个及以上的消息启动事件引用具有相同消息名称的消息，
+              则两个或多个消息启动事件引用相同的消息。
+
+            2.消息启动事件的名称在所有部署的流程定义中必须是唯一的，否则，Activiti 在部署流程定义时抛出异常，
+              使得一个及以上的消息启动事件引用由不同流程定义部署的消息启动事件同名的消息。
+
+            3.流程版本控制：在部署流程定义的新版本时，将取消先前版本的消息订阅。对于新版本中不存在的消息事件也是如此。
+
+        启动对应的流程实例API方式见：Java: com.shaoteemo.bpmn.MessageEventImpl
+
+            *JavaAPI中的传入属性messageName：是在 messageEventDefinition 的 messageRef 属性引用的消息元素的 name 属性中给出的名称。
+
+            启动流程实例时，注意事项：
+                1.消息启动事件仅在主流程上受支持。嵌入式子流程不支持消息启动事件。
+
+                2.如果流程定义有多个消息启动事件，runtimeService.startProcessInstanceByMessage(…)允许选择适当的启动事件。
+
+                3.如果流程定义有多个消息启动事件和一个无启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(…)使用无启动事件启动流程实例。
+
+                4.如果流程定义有多个消息启动事件并且没有无启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(… )会抛出异常。
+
+                5.如果流程定义具有单个消息启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(… )会使用消息启动事件启动一个新的流程实例。
+
+                6.如果流程是以活动调用方式启动的，则仅在以下情况下才支持消息启动事件
+                    6.1.除了消息开始事件之外，流程还有一个无开始事件
+                    6.2.该流程只有一个消息启动事件，没有其他启动事件。
+
+    -->
+
+    <message id="newInvoice" name="newInvoiceMessage" />
+
+    <process id="message_start_event" name="messageStartEvent">
+        <startEvent id="messageStart" >
+            <messageEventDefinition messageRef="newInvoice"/>
+        </startEvent>
+    </process>
+</definitions>

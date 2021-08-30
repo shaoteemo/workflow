@@ -11,9 +11,20 @@
         targetNamespace="空开始事件演示">
 
     <!--
-        空开始事件：
+        空开始事件：未指定启动流程实例的触发器事件。
+            这意味着这样的流程需要手动启动。通过RuntimeService中的API启动。
+
+            NOTE：子流程总是有一个空开始事件
+
     -->
     <process id="none_start_event" name="noneStartEvent">
+        <!--空开始事件的XML表示是正常的开始事件声明，没有任何子元素（其他开始事件类型都有一个声明类型的子元素）。-->
         <startEvent id="start" name="my start event"/>
+
+        <!--
+            对空开始事件的自定义扩展
+            formKey：对用户在启动新流程实例时必须填写的表单模板的引用。
+        -->
+        <startEvent id="startFormKey" activiti:formKey="org/activiti/examples/taskforms/request.form"/>
     </process>
 </definitions>
