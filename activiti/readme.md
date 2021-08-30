@@ -764,3 +764,41 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 #### 6.空开始事件（None Start Event）常用的一个事件
 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="空开始事件演示">
+
+    <!--
+        空开始事件：未指定启动流程实例的触发器事件。
+            这意味着这样的流程需要手动启动。通过RuntimeService中的API启动。
+
+            NOTE：子流程总是有一个空开始事件
+
+    -->
+    <process id="none_start_event" name="noneStartEvent">
+        <!--空开始事件的XML表示是正常的开始事件声明，没有任何子元素（其他开始事件类型都有一个声明类型的子元素）。-->
+        <startEvent id="start" name="my start event"/>
+
+        <!--
+            对空开始事件的自定义扩展
+            formKey：对用户在启动新流程实例时必须填写的表单模板的引用。
+        -->
+        <startEvent id="startFormKey" activiti:formKey="org/activiti/examples/taskforms/request.form"/>
+    </process>
+</definitions>
+
+```
+
+#### 7.定时器启动事件（Timer Start Event）
+
+图片示例：![定时器图片样式](http://rep.shaoteemo.com/activiti/bpmn.clock.start.event.png)
+
