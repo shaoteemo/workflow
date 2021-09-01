@@ -916,3 +916,114 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.start.signal.event.png)
 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号启动事件演示">
+
+    <!--
+        信号启动事件：可用于使用命名信号启动流程实例。
+
+        信号启动事件启动方式：
+            1.中间信号抛出事件
+            2.通过 API（runtimeService.signalEventReceivedXXX 方法）从流程实例中触发信号。
+                （Java Class:com.shaoteemo.bpmn.SignalEventImpl）
+
+            注意，在以上两种情况下，还可以在流程实例的同步和异步启动之间进行选择。
+
+    -->
+
+    <signal id="signal" name="theSignal"/>
+
+    <process id="signal_start_event" name="signalStartEvent">
+        <startEvent id="start">
+            <signalEventDefinition id="theSignalEventDefinition" signalRef="signal"  />
+        </startEvent>
+        <sequenceFlow sourceRef="start" targetRef="task"/>
+        <userTask id="task" name="Task in process A" />
+        <sequenceFlow id="flow2" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
+    </process>
+</definitions>
+```
+
+#### 10.错误开始事件（Error Start Event）
+
+![](http://rep.shaoteemo.com/activiti/bpmn.start.error.event.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="错误开始事件演示">
+
+
+    <!--
+        错误启动事件可用于触发事件子流程。
+        错误启动事件不能用于启动流程实例。
+
+        错误启动事件总是中断。
+    -->
+
+    <process id="error_start_event" name="errorStartEvent">
+        <startEvent id="messageStart" >
+            <errorEventDefinition errorRef="someError" />
+        </startEvent>
+    </process>
+</definitions>
+
+```
+
+#### 11.结束事件（End Events）
+
+结束事件表示（子）流程的（路径的）结束。结束事件总是抛出。
+
+这意味着当流程执行到达结束事件时，会抛出一个结果。结果的类型由事件的内部黑色图标描述。
+
+#### 12.空结束事件（None End Event）
+
+![](http://rep.shaoteemo.com/activiti/bpmn.none.end.event.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="空结束事件演示">
+
+    <!--
+        空结束事件意味着到达事件时抛出的结果是未指定的。
+        因此，除了结束当前的执行路径外，引擎不会做任何额外的事情。
+    -->
+
+    <process id="none_end_event" name="noneEndEvent">
+        <endEvent id="end" name="my end event"/>
+    </process>
+</definitions>
+```
+
+#### 13.错误结束事件（Error End Event）
+
+![](http://rep.shaoteemo.com/activiti/bpmn.error.end.event.png)
+

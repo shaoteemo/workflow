@@ -8,9 +8,29 @@
         xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-        targetNamespace="信号开始事件演示">
+        targetNamespace="信号启动事件演示">
+
+    <!--
+        信号启动事件：可用于使用命名信号启动流程实例。
+
+        信号启动事件启动方式：
+            1.中间信号抛出事件
+            2.通过 API（runtimeService.signalEventReceivedXXX 方法）从流程实例中触发信号。
+                （Java Class:com.shaoteemo.bpmn.SignalEventImpl）
+
+            注意，在以上两种情况下，还可以在流程实例的同步和异步启动之间进行选择。
+
+    -->
+
+    <signal id="signal" name="theSignal"/>
 
     <process id="signal_start_event" name="signalStartEvent">
-
+        <startEvent id="start">
+            <signalEventDefinition id="theSignalEventDefinition" signalRef="signal"  />
+        </startEvent>
+        <sequenceFlow sourceRef="start" targetRef="task"/>
+        <userTask id="task" name="Task in process A" />
+        <sequenceFlow id="flow2" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
     </process>
 </definitions>
