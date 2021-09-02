@@ -1027,3 +1027,59 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.error.end.event.png)
 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="错误结束事件演示">
+
+    <!--
+        当流程执行到达错误结束事件时，当前执行路径结束并抛出错误。
+
+        此错误可以被匹配的中间边界错误事件捕获。如果没有找到匹配的边界错误事件，则会抛出异常。
+    -->
+
+
+    <error id="myError" errorCode="123"/>
+
+    <process id="error_end_event" name="errorEndEvent">
+        <!--
+            错误结束事件表示为结束事件，带有一个 errorEventDefinition 子元素。
+
+            errorRef 属性可以引用在进程外定义的错误元素：
+        -->
+        <endEvent id="end">
+            <errorEventDefinition errorRef="myError"/>
+        </endEvent>
+    </process>
+
+    <!--
+        errorCode 用于查找匹配的捕获边界错误事件。
+
+        如果 errorRef 与任何定义的错误都不匹配，则 errorRef 会匹配 errorCode。
+    -->
+    <error id="myError2" errorCode="error123"/>
+
+    <process id="myProcess">
+        <endEvent id="myErrorEndEvent">
+            <errorEventDefinition errorRef="myError2"/>
+        </endEvent>
+        <!--这两个效果相同-->
+        <endEvent id="myErrorEndEvent2">
+            <errorEventDefinition errorRef="error123" />
+        </endEvent>
+    </process>
+</definitions>
+```
+
+#### 14.终止结束事件（Terminate End Event）
+
+![](http://rep.shaoteemo.com/activiti/bpmn.terminate.end.event.png)
+
