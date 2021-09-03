@@ -10,7 +10,29 @@
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
         targetNamespace="终止结束事件演示">
 
+
+    <!--
+
+        当达到终止结束事件时，当前流程实例或子流程将被终止。
+        从概念上讲，当执行到达终止结束事件时，将确定并结束第一个范围（流程或子流程）。
+
+        这个规则一般适用：
+            例如当有一个多实例调用活动或嵌入的子流程时，只有那个实例会被结束，其他实例和流程实例不受影响。
+
+        注意:
+            在 BPMN 2.0 中，子流程可以是嵌入式子流程、调用活动、事件子流程或事务子流程。
+
+    -->
+
     <process id="terminate_end_event" name="terminateEndEvent">
 
+        <endEvent>
+            <!--
+                可选属性 terminateAll 默认值为false：
+                    当为true时，无论终止结束事件在流程定义中的位置如何，
+                    也无论是否在子流程（甚至嵌套）中，主流程实例都将被终止。
+            -->
+            <terminateEventDefinition activiti:terminateAll="true"/>
+        </endEvent>
     </process>
 </definitions>

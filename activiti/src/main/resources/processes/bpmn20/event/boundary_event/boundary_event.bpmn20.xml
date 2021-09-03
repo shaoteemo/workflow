@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="边界事件演示">
+
+
+    <!--
+        边界事件捕获附加到活动的事件（边界事件永远不会抛出）。这意味着当活动正在运行时，事件正在侦听某种类型的触发器。
+        当事件被捕获时，活动被中断并遵循从事件出去的序列流。
+
+        边界事件定义：
+            1.唯一标识符（流程范围内）
+            2.对通过attachedToRef 属性将事件附加到的活动的引用。注意，边界事件与它们所依附的活动在同一级别上定义（即，活动中不包含边界事件）。
+
+    -->
+
+    <process id="boundary_event" name="boundaryEvent">
+        <!--所有边界事件的定义方式-->
+        <boundaryEvent attachedToRef="theActivity" id="myBoundaryEvent">
+            <XXXEventDefinition/>
+        </boundaryEvent>
+    </process>
+</definitions>

@@ -1,4 +1,4 @@
-# Activiti6.0.0实践报告（草稿）
+# Activiti6.0.0实践报告（草稿官方文档）
 
 ## 环境概述
 
@@ -529,7 +529,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 	2.抛出：通过填充黑色的内部图标在视觉上与捕获事件区分开来。
 ```
 
-#### 1.定时器事件（TimerEventDefinition）
+#### 1.定时器事件定义（TimerEventDefinition）
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -604,7 +604,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 -->
 ```
 
-#### 2.错误事件（ErrorEventDefinition）
+#### 2.错误事件定义（ErrorEventDefinition）
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -632,7 +632,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 ```
 
-#### 3.信号事件（SignalEventDefinition）
+#### 3.信号事件定义（SignalEventDefinition）
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -690,7 +690,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 -->
 ```
 
-#### 4.消息事件（MeaasgeEventDefinition）
+#### 4.消息事件定义（MeaasgeEventDefinition）
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -991,9 +991,7 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 
 #### 11.结束事件（End Events）
 
-结束事件表示（子）流程的（路径的）结束。结束事件总是抛出。
-
-这意味着当流程执行到达结束事件时，会抛出一个结果。结果的类型由事件的内部黑色图标描述。
+结束事件表示（子）流程的（路径的）结束。结束事件总是抛出。这意味着当流程执行到达结束事件时，会抛出一个结果。结果的类型由事件的内部黑色图标描述。
 
 #### 12.空结束事件（None End Event）
 
@@ -1082,4 +1080,173 @@ Activiti 会在ProcessDefinition时存储到数据库之前为其分配一个版
 #### 14.终止结束事件（Terminate End Event）
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.terminate.end.event.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="终止结束事件演示">
+
+
+    <!--
+
+        当达到终止结束事件时，当前流程实例或子流程将被终止。
+        从概念上讲，当执行到达终止结束事件时，将确定并结束第一个范围（流程或子流程）。
+
+        这个规则一般适用：
+            例如当有一个多实例调用活动或嵌入的子流程时，只有那个实例会被结束，其他实例和流程实例不受影响。
+
+        注意:
+            在 BPMN 2.0 中，子流程可以是嵌入式子流程、调用活动、事件子流程或事务子流程。
+
+    -->
+
+    <process id="terminate_end_event" name="terminateEndEvent">
+
+        <endEvent>
+            <!--
+                可选属性 terminateAll 默认值为false：
+                    当为true时，无论终止结束事件在流程定义中的位置如何，
+                    也无论是否在子流程（甚至嵌套）中，主流程实例都将被终止。
+            -->
+            <terminateEventDefinition activiti:terminateAll="true"/>
+        </endEvent>
+    </process>
+</definitions>
+```
+
+#### 15.取消结束事件（Cancel End Event）
+
+![](http://rep.shaoteemo.com/activiti/%E5%8F%96%E6%B6%88%E7%BB%93%E6%9D%9F%E4%BA%8B%E4%BB%B6.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="取消结束事件演示">
+
+    <!--
+        取消结束事件只能与 bpmn 事务子流程结合使用。
+
+        当到达取消结束事件时，将抛出取消事件，该事件必须由取消边界事件捕获。然后取消边界事件取消事务并触发补偿。
+    -->
+    <process id="cancel_event_end" name="cancelEventEnd">
+        <endEvent>
+            <cancelEventDefinition/>
+        </endEvent>
+    </process>
+</definitions>
+```
+
+### Boundary Events
+
+#### 1.边界事件（Boundary Events）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="边界事件演示">
+
+
+    <!--
+        边界事件捕获附加到活动的事件（边界事件永远不会抛出）。这意味着当活动正在运行时，事件正在侦听某种类型的触发器。
+        当事件被捕获时，活动被中断并遵循从事件出去的序列流。
+
+        边界事件定义：
+            1.唯一标识符（流程范围内）
+            2.对通过attachedToRef 属性将事件附加到的活动的引用。注意，边界事件与它们所依附的活动在同一级别上定义（即，活动中不包含边界事件）。
+
+    -->
+
+    <process id="boundary_event" name="boundaryEvent">
+        <!--所有边界事件的定义方式-->
+        <boundaryEvent attachedToRef="theActivity" id="myBoundaryEvent">
+            <XXXEventDefinition/>
+        </boundaryEvent>
+    </process>
+</definitions>
+```
+
+#### 2.定时器边界事件（Timer Boundary Event）
+
+描述：
+
+定时器边界事件充当秒表和闹钟。当执行到达附加边界事件的活动时，将启动计时器。当计时器触发时（例如，在指定的间隔之后），活动被中断，边界事件随之而来。
+
+图形符号：
+
+计时器边界事件可视化为典型的边界事件（即边界上的圆圈），计时器图标位于内部。
+
+![](http://rep.shaoteemo.com/activiti/%E5%AE%9A%E6%97%B6%E5%99%A8%E8%BE%B9%E7%95%8C%E4%BA%8B%E4%BB%B6.png)
+
+XML表示：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器边界事件演示">
+
+    <process id="timer_boundary_event" name="timerBoundaryEvent">
+        <boundaryEvent attachedToRef="firstLineSupport" cancelActivity="true" id="escalationTimer">
+            <timerEventDefinition>
+                <!--如不知写法的请查看 定时器事件定义-->
+                <timeDuration>PT4H</timeDuration>
+            </timerEventDefinition>
+        </boundaryEvent>
+    </process>
+</definitions>
+```
+
+在图形表示中，圆的线是点状的，如您在下面的示例中所见:
+
+![](http://rep.shaoteemo.com/activiti/timer_boundary_event.png)
+虚线则表示：cancelActivity属性为false。表示不会中断流程。
+
+典型用例：额外发送升级电子邮件，但不会中断正常的流程。
+
+从 BPMN 2.0 开始，中断和非中断定时器事件之间存在差异。中断是默认设置（cancelActivity=true）。不中断导致原始活动没有中断但活动停留在那里。而是创建一个额外的执行并通过事件的传出转换发送。在 XML 表示中，cancelActivity 属性设置为 false：
+
+```xml
+<boundaryEvent id="escalationTimer" cancelActivity="false" attachedToRef="firstLineSupport"/>
+```
+
+注意：边界计时器事件仅在启用作业或异步执行器时触发。
+
+边界事件的一些问题：
+
+在使用任何类型的边界事件时，存在一个关于并发的已知问题。目前，不可能将多个传出序列流附加到边界事件（参见问题 <a href="https://activiti.atlassian.net/browse/ACT-47">ACT-47</a>）。此问题的一种解决方案是使用一个去往并行网关的传出序列流。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.known.issue.boundary.event.png)
+
+#### 3.错误边界事件（Error Boundary Event）
 
