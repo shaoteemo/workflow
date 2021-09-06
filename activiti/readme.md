@@ -1244,9 +1244,558 @@ XML表示：
 
 边界事件的一些问题：
 
-在使用任何类型的边界事件时，存在一个关于并发的已知问题。目前，不可能将多个传出序列流附加到边界事件（参见问题 <a href="https://activiti.atlassian.net/browse/ACT-47">ACT-47</a>）。此问题的一种解决方案是使用一个去往并行网关的传出序列流。
+在使用任何类型的边界事件时，存在一个关于并行的已知问题。目前，不可能将多个传出序列流附加到边界事件（参见问题 <a href="https://activiti.atlassian.net/browse/ACT-47">ACT-47</a>）。此问题的一种解决方案是使用一个去往并行网关的传出序列流。
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.known.issue.boundary.event.png)
 
 #### 3.错误边界事件（Error Boundary Event）
+
+描述：
+
+活动边界上的中间捕获错误，或简称边界错误事件，捕获在定义它的活动范围内抛出的错误。
+
+定义边界错误事件对嵌入的子流程或调用活动最有意义，因为子流程为子流程内的所有活动创建了一个范围。错误结束事件引发错误。此类错误将向上传播其父作用域，直到找到定义了与错误事件定义匹配的边界错误事件的作用域。
+
+当错误事件被捕获时，定义边界事件的活动被销毁，同时销毁其中的所有当前执行（例如并行活动、嵌套子流程等）。流程执行继续遵循边界事件的传出序列流。
+
+图形示例：
+
+边界错误事件可视化为边界上的典型中间事件（内部带有较小圆圈的圆圈），内部带有错误图标。错误图标为白色，表示捕获语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.boundary.error.event.png)
+
+XML示例：
+
+典型的边界事件：
+
+```xml
+<boundaryEvent attachedToRef="mySubProcess" id="catchError">
+      <errorEventDefinition errorRef="myError"/>
+</boundaryEvent>
+```
+
+与错误结束事件一样，errorRef 引用在流程元素之外定义的错误：
+
+```xml
+<error id="myError" errorCode="123" />
+...
+<process id="myProcess">
+...
+```
+
+errorCode属性用于匹配捕获的错误：
+
+- 如果省略errorRef，则边界错误事件将捕获任何错误事件，而不管错误的errorCode。
+- 如果提供了 errorRef 并且它引用了现有错误，则边界事件将仅捕获具有相同错误代码的错误。
+- 如果提供了 errorRef，但 BPMN 2.0 文件中没有定义错误，则 errorRef 用作 errorCode（类似于错误结束事件）。
+
+示例：
+
+以下示例过程显示了如何使用错误结束事件。当通过声明提供的信息不足而完成“*Review profitability*”用户任务时，将引发错误。当在子流程的边界上捕获此错误时，“*Review sales lead*”子流程中的所有活动都将被销毁（即使“*Review customer rating*”尚未完成），并创建“*Provide additional details*”用户任务.
+
+![](http://rep.shaoteemo.com/activiti/bpmn.boundary.error.example.png)
+
+此过程作为演示设置中的示例提供。流程 XML 和单元测试可以在 org.activiti.examples.bpmn.event.error 包中找到。（译者注：见Activiti源码包或编译包）
+
+#### 4.信号边界事件（Signal Boundary Event）
+
+描述：
+
+在活动边界上附加的中间捕获信号，或简称为边界信号事件，捕获与引用的信号定义具有相同信号名称的信号。
+
+注意:
+
+- 与边界错误事件等其他事件相反，边界信号事件不仅捕获从它所连接的范围抛出的信号事件，而且信号事件具有全局范围（广播语义），这意味着信号可以从任何地方抛出，甚至可以从不同的流程实例抛出。
+- 与错误事件等其他事件相反，如果信号被捕获，则不会消耗信号。如果您有两个活动的信号边界事件捕获同一个信号事件，则两个边界事件都会被触发，即使它们属于不同流程实例的一部分。
+
+图形示例：
+
+边界信号事件可视化为边界上的典型中间事件（内部带有较小圆圈的圆形），内部带有信号图标。信号图标为白色（未填充），表示捕获语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.boundary.signal.event.png)
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号边界事件演示">
+
+    <process id="signal_boundary_event" name="signalBoundaryEvent">
+        <boundaryEvent id="boundary" attachedToRef="task" cancelActivity="true">
+            <signalEventDefinition signalRef="alertSignal"/>
+        </boundaryEvent>
+    </process>
+</definitions>
+```
+
+#### 5.消息边界事件（Message Boundary Event）
+
+描述：
+
+活动边界上附加的中间捕获消息，或简称边界消息事件，捕获与引用的消息定义具有相同消息名称的消息。
+
+图形示例：
+
+边界消息事件可视化为边界上的典型中间事件（内部带有较小圆圈的圆圈），内部带有消息图标。消息图标为白色（未填充），表示捕获语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.boundary.message.event.png)注意，边界消息事件可以是中断（右侧）和非中断（左侧)。
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息边界事件">
+
+    <process id="message_boundary_event" name="messageBoundaryEvent">
+        <boundaryEvent id="boundary" attachedToRef="task" cancelActivity="true">
+            <messageEventDefinition messageRef="newCustomerMessage"/>
+        </boundaryEvent>
+    </process>
+</definitions>
+```
+
+#### 6.取消边界事件（Cancel Boundary Event）
+
+描述：
+
+**事务子流程**边界上的附加中间捕获取消，或简称边界取消事件，在事务取消时触发。当取消边界事件被触发时，它首先中断当前作用域中所有活动的执行。接下来，它开始对事务范围内所有活动的补偿边界事件进行补偿。补偿是同步执行的，即边界事件在补偿完成之前等待，然后再离开事务。当补偿完成时，事务子流程使用运行在取消边界事件之外的序列流离开。
+
+注意：
+
+- 事务子流程只允许单个取消边界事件。
+- 如果事务子流程承载嵌套的子流程，则仅对成功完成的子流程触发补偿。
+- 如果将取消边界事件放在具有多实例特征的事务子流程上，如果一个实例触发取消，则边界事件取消所有实例。
+
+图形示例：
+
+取消边界事件可视化为边界上的典型中间事件（内部带有较小圆圈的圆圈），内部带有取消图标。取消图标为白色（未填充），表示捕获语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.boundary.cancel.event.png)
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="取消边界事件演示">
+
+    <process id="cancel_boundary_event" name="cancelBoundaryEvent">
+        <boundaryEvent id="boundary" attachedToRef="transaction" >
+            <cancelEventDefinition />
+        </boundaryEvent>
+    </process>
+</definitions>
+```
+
+由于取消边界事件总是中断流程，因此不需要cancelActivity属性。
+
+#### 7.补偿边界事件（Compensation Boundary Event）
+
+描述：
+
+在活动边界上附加的中间捕获补偿或简称补偿边界事件，可用于将补偿处理程序附加到活动。
+
+补偿边界事件必须使用定向关联引用单个补偿处理程序。
+
+补偿边界事件与其他边界事件具有不同的激活策略。其他边界事件（例如信号边界事件）在它们所连接的活动开始时被激活。当活动离开时，它们被停用并取消相应的事件订阅。补偿边界事件不同。当附加到的**活动成功完成时**，将激活补偿边界事件。至此，相应的补偿事件订阅就创建完成了。当触发补偿事件或相应的流程实例结束时，订阅将被删除。由此可知：
+
+- 当补偿被触发时，与补偿边界事件关联的补偿处理程序被调用的次数与它所附加到的活动成功完成的次数相同。
+- 如果补偿边界事件附加到具有多个实例特征的活动，则为每个实例创建补偿事件订阅。
+- 如果补偿边界事件附加到包含在循环内的活动，则每次执行活动时都会创建补偿事件订阅。
+- 如果流程实例结束，则取消对补偿事件的订阅。
+
+注意：嵌入式子流程不支持补偿边界事件。使用association标签连接补偿。
+
+图形示例：
+
+补偿边界事件可视化为边界上的典型中间事件（内部带有较小圆圈的圆圈），内部带有补偿图标。补偿图标为白色（未填充），表示捕获语义。除了补偿边界事件外，下图显示了使用单向关联与边界事件关联的补偿处理程序：
+
+![](http://rep.shaoteemo.com/activiti/bpmn.boundary.compensation.event.png)
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="补偿边界事件演示">
+
+    <process id="compensation_boundary_event" name="compensationBoundaryEvent">
+        <boundaryEvent id="compensateBookHotelEvt" attachedToRef="bookHotel" >
+            <compensateEventDefinition />
+        </boundaryEvent>
+
+        <association associationDirection="One" id="a1"  sourceRef="compensateBookHotelEvt" targetRef="undoBookHotel" />
+
+        <serviceTask id="undoBookHotel" isForCompensation="true" activiti:class="..." />
+    </process>
+</definitions>
+```
+
+由于在活动成功完成后才激活补偿边界事件，因此不支持**cancelActivity**属性。
+
+### Intermediate Events
+
+#### 1.中间捕获事件（Intermediate Catching Events）
+
+所有中间捕获事件都以相同的方式定义：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="中间捕获事件演示">
+
+    <process id="intermediate_catching_events" name="intermediateCatchingEvents">
+        <intermediateCatchEvent id="myIntermediateCatchEvent" >
+            <XXXEventDefinition/>
+        </intermediateCatchEvent>
+    </process>
+</definitions>
+```
+
+中间捕获事件定义为
+
+- 唯一标识符（进程范围内）
+- XXXEventDefinition（例如 TimerEventDefinition 等）形式的 XML 子元素，用于定义中间捕获事件的类型。有关更多详细信息，请参阅特定的捕获事件类型。
+
+#### 2.定时器中间捕获事件（Timer Intermediate Catching Event）
+
+描述：
+
+计时器中间事件充当秒表。当执行到达捕获事件活动时，将启动计时器。当计时器触发时（例如，在指定的时间间隔之后），将遵循计时器中间事件的序列流。
+
+图形示例：
+
+定时器中间事件可视化为中间捕获事件，内部带有定时器图标。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.intermediate.timer.event.png)
+
+XML示例：
+
+定时器中间事件被定义为中间捕获事件。在这种情况下，特定类型子元素是 timerEventDefinition 元素。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器中间捕获事件演示">
+
+    <process id="timer_intermediate_catching_event" name="timerIntermediateCatchingEvent">
+        <intermediateCatchEvent id="timer">
+            <timerEventDefinition>
+                <timeDuration>PT5M</timeDuration>
+            </timerEventDefinition>
+        </intermediateCatchEvent>
+    </process>
+</definitions>
+```
+
+更多定时器相关请查看定时器事件定义。
+
+#### 3.信号中间捕获事件（Signal Intermediate Catching Event）
+
+描述：
+
+中间捕获信号事件捕获与引用的信号定义具有相同信号名称的信号。
+
+注意：与错误事件等其他事件相反，如果信号被捕获，则不会消耗信号。如果您有两个活动的信号边界事件捕获同一个信号事件，则两个边界事件都会被触发，即使它们属于不同流程实例的一部分。
+
+图形示例：
+
+中间信号捕获事件被可视化为典型的中间事件（里面有小圆圈的圆圈），里面有信号图标。信号图标为白色（未填充），表示捕获语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.intermediate.signal.catch.event.png)
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号中间捕获事件演示">
+
+    <process id="signal_intermediate_catching_event" name="signalIntermediateCatchingEvent">
+        <intermediateCatchEvent id="signal">
+            <!--指向信号的ID-->
+            <signalEventDefinition signalRef="newCustomerSignal" />
+        </intermediateCatchEvent>
+    </process>
+</definitions>
+```
+
+更多信号相关请查看信号事件定义。
+
+#### 4.消息中间捕获事件（Message Intermediate Catching Event）
+
+描述：
+
+中间捕获消息事件捕获具有指定名称的消息。
+
+图形示例：
+
+中间捕获消息事件被可视化为典型的中间事件（里面有小圆圈的圆圈），里面有消息图标。消息图标为白色（未填充），表示捕获语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.intermediate.message.catch.event.png)
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息中间捕获事件演示">
+
+    <process id="message_intermediate_catching_event" name="messageIntermediateCatchingEvent">
+        <intermediateCatchEvent id="message">
+            <messageEventDefinition messageRef="newCustomerMessage" />
+        </intermediateCatchEvent>
+    </process>
+</definitions>
+```
+
+更多消息相关请查看消息事件定义。
+
+#### 5.中间抛出事件（Intermediate Throwing Event）
+
+所有中间抛出事件都以相同的方式定义：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="中间抛出事件演示">
+
+    <process id="intermediate_throwing_event" name="intermediateThrowingEvent">
+        <intermediateThrowEvent id="myIntermediateThrowEvent" >
+            <XXXEventDefinition/>
+        </intermediateThrowEvent>
+    </process>
+</definitions>
+```
+
+中间抛出事件定义为
+
+- 唯一标识符（进程范围内）
+- XXXEventDefinition 形式的 XML 子元素（例如，signalEventDefinition 等），用于定义中间抛出事件的类型。有关更多详细信息，请参阅特定的抛出事件类型。
+
+#### 6.空中间抛出事件（Intermediate Throwing None Event）
+
+图形示例：
+
+下面的流程图显示了一个中间无事件的简单示例，它通常用于指示在流程中达到的某种状态。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.intermediate.none.event.png)
+
+这可以是监控某些 KPI 的一个很好的钩子，基本上是通过添加一个执行侦听器。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="空中间抛出事件演示">
+
+    <process id="intermediate_throwing_none_event" name="intermediateThrowingNoneEvent">
+        <intermediateThrowEvent id="noneEvent">
+            <extensionElements>
+                <activiti:executionListener class="org.activiti.engine.test.bpmn.event.IntermediateNoneEventTest$MyExecutionListener" event="start" />
+            </extensionElements>
+        </intermediateThrowEvent>
+    </process>
+</definitions>
+```
+
+在那里您可以添加一些自己的代码，以便向您的 BAM 工具或 DWH 发送一些事件。引擎本身在那个事件中不做任何事情，它只是通过。
+
+#### 7.信号中间抛出事件（Signal Intermediate Throwing Event）
+
+描述：
+
+中间抛出信号事件为定义的信号抛出信号事件。
+
+在 Activiti 中，信号被广播到所有活动处理程序（即所有捕获信号事件）。信号可以同步或异步发布。
+
+- 在默认配置中，信号是同步传送的。这意味着抛出流程实例会等待，直到将信号传递给所有捕获流程实例。捕获流程实例也在与抛出流程实例相同的事务中得到通知，这意味着如果被通知的实例之一产生技术错误（抛出异常），则所有涉及的实例都会失败。
+- 信号也可以异步传递。在这种情况下，确定在达到抛出信号事件时哪些处理程序处于活动状态。对于每个活动处理程序，由 JobExecutor 存储和传递异步通知消息 (Job)。
+
+图形示例：
+
+中间信号抛出事件被可视化为典型的中间事件（里面有小圆圈的圆圈），里面有信号图标。信号图标为黑色（填充），表示抛出语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.intermediate.signal.throw.event.png)
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号中间抛出事件演示">
+
+    <process id="signal_intermediate_throwing_event" name="signalIntermediateThrowingEvent">
+        <intermediateThrowEvent id="signal">
+            <signalEventDefinition signalRef="newCustomerSignal" />
+        </intermediateThrowEvent>
+
+        <!--异步写法-->
+        <intermediateThrowEvent id="signal2">
+            <signalEventDefinition signalRef="newCustomerSignal" activiti:async="true" />
+        </intermediateThrowEvent>
+    </process>
+</definitions>
+```
+
+更多信号相关请查看信号事件定义。
+
+#### 8.补偿中间抛出事件（Compensation Intermediate Throwing Event）
+
+[不稳定的]
+
+描述：
+
+中间抛出补偿事件可用于触发补偿。
+
+触发补偿：可以为指定的活动或托管补偿事件的范围触发补偿。补偿是通过执行与活动关联的补偿处理程序来执行的。
+
+- 为活动抛出补偿时，关联的补偿处理程序执行的次数与活动成功竞争的次数相同。
+- 如果为当前范围抛出补偿，则补偿当前范围内的所有活动，包括并行分支上的活动。
+- 补偿按层次触发：如果要补偿的活动是子流程，则为包含在子流程中的所有活动触发补偿。如果子流程具有嵌套的活动，则会递归地抛出补偿。但是，补偿不会传播到流程的“上层”：如果在子流程内触发补偿，则不会传播到子流程范围之外的活动。BPMN 规范指出，在“子流程的同一级别”的活动会触发补偿。
+- 在 Activiti 中，补偿以执行的相反顺序执行。这意味着最后完成的活动首先得到补偿，依此类推。
+- 中间抛出补偿事件可用于补偿竞争成功的事务子进程。
+
+注意：如果在包含子流程的范围内抛出补偿，并且子流程包含带有补偿处理程序的活动，则只有在抛出补偿时子流程成功完成，补偿才会传播到子流程。如果嵌套在子流程中的某些活动已完成并附加了补偿处理程序，并且包含这些活动的子流程尚未完成，则不会执行补偿处理程序。考虑以下示例：
+
+![](http://rep.shaoteemo.com/activiti/bpmn.throw.compensation.example1.png)
+
+在这个过程中，我们有两个并行执行，一个执行嵌入式子流程，另一个执行“charge credit card”活动。假设两个执行都已启动，第一个并行执行正在等待用户完成“review bookings”任务。第二个执行“charge credit card”活动并抛出错误，导致“cancel reservations”事件触发补偿。此时并行子流程尚未完成，这意味着补偿事件不会传播到子流程，因此不会执行“cancel hotel reservation”补偿处理程序。如果用户任务（以及嵌入式子流程）在执行“cancel reservations”之前完成，补偿将传播到嵌入式子流程。
+
+**流程变量：**在补偿嵌入的子流程时，用于执行补偿处理程序的执行可以访问子流程的**本地流程变量**，该变量处于子流程完成执行时所处的状态。为了实现这一点，获取与范围执行（为执行子流程而创建的执行）关联的流程变量的快照。从这个角度来看，有几个含义：
+
+- 补偿处理程序无权访问添加到在子流程范围内创建的并行执行的变量。
+- 与层次结构中更高级别的执行关联的流程变量，（例如，与流程实例执行关联的流程变量不包含在快照中：当补偿被抛出时，补偿处理程序可以在它们所处的状态下访问这些过程变量。
+- 变量快照仅用于嵌入式子流程，而不用于其他活动。
+
+**当前限制：**
+
+- **waitForCompletion="false"**目前不支持。当使用中间抛出补偿事件触发补偿时，只有在补偿成功完成后才离开该事件。
+- 补偿本身目前由并行执行来执行。并行执行以补偿活动完成的相反顺序开始。活动的未来版本可能包括按顺序执行补偿的选项。
+- 变量快照仅用于嵌入式子流程，而不用于其他活动。
+
+图形示例：
+
+中间补偿抛出事件可视化为典型的中间事件（内部带有较小圆圈的圆圈），内部带有补偿图标。补偿图标为黑色（填充），表示抛出语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.intermediate.compensation.throw.event.png)
+
+XML示例：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="补偿中间抛出事件演示">
+
+    <process id="compensation_intermediate_throwing_event" name="compensationIntermediateThrowingEvent">
+        <!--基本定义-->
+        <intermediateThrowEvent id="throwCompensation">
+            <compensateEventDefinition />
+        </intermediateThrowEvent>
+        <!--
+            activityRef：触发特定范围/活动的补偿
+        -->
+        <intermediateThrowEvent id="throwCompensation2">
+            <compensateEventDefinition activityRef="bookHotel" />
+        </intermediateThrowEvent>
+    </process>
+</definitions>
+```
 

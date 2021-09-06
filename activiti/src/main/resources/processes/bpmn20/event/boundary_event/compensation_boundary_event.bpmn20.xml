@@ -8,11 +8,15 @@
         xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-        targetNamespace="错误边界事件演示">
+        targetNamespace="补偿边界事件演示">
 
-    <process id="error_boundary_event" name="errorBoundaryEvent">
-        <boundaryEvent attachedToRef="mySubProcess" id="catchError">
-            <errorEventDefinition errorRef="myError"/>
+    <process id="compensation_boundary_event" name="compensationBoundaryEvent">
+        <boundaryEvent id="compensateBookHotelEvt" attachedToRef="bookHotel" >
+            <compensateEventDefinition />
         </boundaryEvent>
+
+        <association associationDirection="One" id="a1"  sourceRef="compensateBookHotelEvt" targetRef="undoBookHotel" />
+
+        <serviceTask id="undoBookHotel" isForCompensation="true" activiti:class="..." />
     </process>
 </definitions>

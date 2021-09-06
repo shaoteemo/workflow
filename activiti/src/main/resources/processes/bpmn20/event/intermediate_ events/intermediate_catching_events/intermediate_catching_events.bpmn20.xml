@@ -8,11 +8,11 @@
         xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-        targetNamespace="错误边界事件演示">
+        targetNamespace="中间捕获事件演示">
 
-    <process id="error_boundary_event" name="errorBoundaryEvent">
-        <boundaryEvent attachedToRef="mySubProcess" id="catchError">
-            <errorEventDefinition errorRef="myError"/>
-        </boundaryEvent>
+    <process id="intermediate_catching_events" name="intermediateCatchingEvents">
+        <intermediateCatchEvent id="myIntermediateCatchEvent" >
+            <XXXEventDefinition/>
+        </intermediateCatchEvent>
     </process>
 </definitions>

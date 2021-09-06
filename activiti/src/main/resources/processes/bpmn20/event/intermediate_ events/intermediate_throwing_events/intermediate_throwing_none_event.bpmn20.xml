@@ -8,11 +8,13 @@
         xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-        targetNamespace="错误边界事件演示">
+        targetNamespace="空中间抛出事件演示">
 
-    <process id="error_boundary_event" name="errorBoundaryEvent">
-        <boundaryEvent attachedToRef="mySubProcess" id="catchError">
-            <errorEventDefinition errorRef="myError"/>
-        </boundaryEvent>
+    <process id="intermediate_throwing_none_event" name="intermediateThrowingNoneEvent">
+        <intermediateThrowEvent id="noneEvent">
+            <extensionElements>
+                <activiti:executionListener class="org.activiti.engine.test.bpmn.event.IntermediateNoneEventTest$MyExecutionListener" event="start" />
+            </extensionElements>
+        </intermediateThrowEvent>
     </process>
 </definitions>

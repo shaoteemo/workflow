@@ -8,11 +8,12 @@
         xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-        targetNamespace="错误边界事件演示">
+        targetNamespace="信号中间捕获事件演示">
 
-    <process id="error_boundary_event" name="errorBoundaryEvent">
-        <boundaryEvent attachedToRef="mySubProcess" id="catchError">
-            <errorEventDefinition errorRef="myError"/>
-        </boundaryEvent>
+    <process id="signal_intermediate_catching_event" name="signalIntermediateCatchingEvent">
+        <intermediateCatchEvent id="signal">
+            <!--指向信号的ID-->
+            <signalEventDefinition signalRef="newCustomerSignal" />
+        </intermediateCatchEvent>
     </process>
 </definitions>

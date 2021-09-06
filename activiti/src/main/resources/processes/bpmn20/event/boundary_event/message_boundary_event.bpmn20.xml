@@ -8,11 +8,11 @@
         xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-        targetNamespace="错误边界事件演示">
+        targetNamespace="消息边界事件">
 
-    <process id="error_boundary_event" name="errorBoundaryEvent">
-        <boundaryEvent attachedToRef="mySubProcess" id="catchError">
-            <errorEventDefinition errorRef="myError"/>
+    <process id="message_boundary_event" name="messageBoundaryEvent">
+        <boundaryEvent id="boundary" attachedToRef="task" cancelActivity="true">
+            <messageEventDefinition messageRef="newCustomerMessage"/>
         </boundaryEvent>
     </process>
 </definitions>

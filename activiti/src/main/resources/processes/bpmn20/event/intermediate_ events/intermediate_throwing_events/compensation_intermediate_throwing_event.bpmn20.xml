@@ -8,11 +8,18 @@
         xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
         xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
         xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
-        targetNamespace="错误边界事件演示">
+        targetNamespace="补偿中间抛出事件演示">
 
-    <process id="error_boundary_event" name="errorBoundaryEvent">
-        <boundaryEvent attachedToRef="mySubProcess" id="catchError">
-            <errorEventDefinition errorRef="myError"/>
-        </boundaryEvent>
+    <process id="compensation_intermediate_throwing_event" name="compensationIntermediateThrowingEvent">
+        <!--基本定义-->
+        <intermediateThrowEvent id="throwCompensation">
+            <compensateEventDefinition />
+        </intermediateThrowEvent>
+        <!--
+            activityRef：触发特定范围/活动的补偿
+        -->
+        <intermediateThrowEvent id="throwCompensation2">
+            <compensateEventDefinition activityRef="bookHotel" />
+        </intermediateThrowEvent>
     </process>
 </definitions>
