@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="并行网关演示">
+
+    <process id="parallel_gateway" name="parallelGateway">
+        <parallelGateway id="myParallelGateway" />
+
+        <!--文档中的案例-->
+        <startEvent id="theStart" />
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="fork" />
+
+        <parallelGateway id="fork" />
+        <sequenceFlow sourceRef="fork" targetRef="receivePayment" />
+        <sequenceFlow sourceRef="fork" targetRef="shipOrder" />
+
+        <userTask id="receivePayment" name="Receive Payment" />
+        <sequenceFlow sourceRef="receivePayment" targetRef="join" />
+
+        <userTask id="shipOrder" name="Ship Order" />
+        <sequenceFlow sourceRef="shipOrder" targetRef="join" />
+
+        <parallelGateway id="join" />
+        <sequenceFlow sourceRef="join" targetRef="archiveOrder" />
+
+        <userTask id="archiveOrder" name="Archive Order" />
+        <sequenceFlow sourceRef="archiveOrder" targetRef="theEnd" />
+
+        <endEvent id="theEnd" />
+    </process>
+</definitions>

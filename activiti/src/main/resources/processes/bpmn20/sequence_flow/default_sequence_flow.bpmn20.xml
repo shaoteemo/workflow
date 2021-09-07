@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="默认序列流演示">
+
+    <process id="default_sequence_flow" name="defaultSequenceFlow">
+        <!--default：默认序列流ID-->
+        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" default="flow2" />
+        <sequenceFlow id="flow1" sourceRef="exclusiveGw" targetRef="task1">
+            <conditionExpression xsi:type="tFormalExpression">${conditionA}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="task2"/>
+        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="task3">
+            <conditionExpression xsi:type="tFormalExpression">${conditionB}</conditionExpression>
+        </sequenceFlow>
+    </process>
+</definitions>

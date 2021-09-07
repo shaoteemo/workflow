@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="专属网关演示">
+
+    <process id="exclusive_gateway" name="exclusiveGateway">
+        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" />
+
+        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="theTask1">
+            <conditionExpression xsi:type="tFormalExpression">${input == 1}</conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="theTask2">
+            <conditionExpression xsi:type="tFormalExpression">${input == 2}</conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="flow4" sourceRef="exclusiveGw" targetRef="theTask3">
+            <conditionExpression xsi:type="tFormalExpression">${input == 3}</conditionExpression>
+        </sequenceFlow>
+    </process>
+</definitions>

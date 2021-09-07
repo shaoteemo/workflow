@@ -1799,3 +1799,533 @@ XML示例：
 </definitions>
 ```
 
+### Sequence Flow
+
+#### 1.序列流（Sequence Flow）
+
+描述：
+
+序列流是流程的两个元素之间的连接器。在流程执行期间访问元素后，将遵循所有传出序列流。这意味着 BPMN 2.0 的默认性质是并行的：两个传出序列流将创建两个独立的并行执行路径。
+
+图形示例：
+
+序列流被可视化为从源元素到目标元素的箭头。箭头始终指向目标。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.sequence.flow.png)
+
+XML示例：
+
+序列流需要有一个流程元素唯一的 id，以及对现有源和目标元素的引用。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="序列流演示">
+
+    <process id="sequence_flow" name="sequenceFlow">
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="theTask" />
+    </process>
+</definitions>
+```
+
+#### 2.条件序列流（Conditional Sequence Flow）
+
+描述：
+
+序列流可以定义一个条件。当离开 BPMN 2.0 活动时，默认行为是评估传出序列流的条件。当条件评估为true时，将选择该传出序列流。当以这种方式选择多个序列流时，将生成多个执行并以并行方式继续该过程。
+
+注意：以上内容适用于 BPMN 2.0 活动（和事件），但不适用于网关。网关将根据网关类型以特定方式处理带有条件的序列流。
+
+图形示例：
+
+条件序列流可视化为常规序列流，开头带有一个小菱形。条件表达式显示在序列流旁边。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.conditional.sequence.flow.png)
+
+XML示例：
+
+条件序列流在 XML 中表示为常规序列流，其中包含一个 conditionExpression 子元素。请注意，目前仅支持 tFormalExpressions，省略 xsi:type="" 定义将简单地默认为仅支持的表达式类型。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="表达式序列流演示">
+
+    <process id="conditional_sequence_flow" name="conditionalSequenceFlow">
+        <sequenceFlow id="flow" sourceRef="theStart" targetRef="theTask">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${order.price > 100 && order.price < 250}]]>
+            </conditionExpression>
+        </sequenceFlow>
+    </process>
+</definitions>
+```
+
+当前条件表达式只能与 UEL 一起使用，有关这些的详细信息可以在表达式部分找到。使用的表达式应解析为布尔值，否则在评估条件时会抛出异常。
+
+- 下面的示例通过 getter 以典型的 JavaBean 样式引用流程变量的数据。
+
+  ```xml
+  <conditionExpression xsi:type="tFormalExpression">
+    <![CDATA[${order.price > 100 && order.price < 250}]]>
+  </conditionExpression>
+  ```
+
+- 此示例调用解析为布尔值的方法。
+
+  ```xml
+  <conditionExpression xsi:type="tFormalExpression">
+    <![CDATA[${order.isStandardOrder()}]]>
+  </conditionExpression>
+  ```
+
+Activiti 发行版包含以下使用值和方法表达式的示例流程（请参阅 org.activiti.examples.bpmn.expression）：
+
+![](http://rep.shaoteemo.com/activiti/bpmn.uel-expression.on.seq.flow.png)
+
+#### 3.默认序列流（Default Sequence Flow）
+
+描述：
+
+所有 BPMN 2.0 任务和网关都可以有一个默认的序列流。当且仅当无法选择任何其他序列流时，才选择此序列流作为该活动的传出序列流。默认序列流上的条件总是被忽略。
+
+图形示例：
+
+默认序列流可视化为常规序列流，开头带有斜线标记。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.default.sequence.flow.png)
+
+XML示例：
+
+某个活动的默认序列流由该活动的默认属性定义。例如，以下 XML 片段显示了一个具有默认序列流*flow 2*. 的独占网关。只有当conditionA 和conditionB 都评估为false 时，才会被选为网关的传出序列流。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="默认序列流演示">
+
+    <process id="default_sequence_flow" name="defaultSequenceFlow">
+        <!--default：默认序列流ID-->
+        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" default="flow2" />
+        <sequenceFlow id="flow1" sourceRef="exclusiveGw" targetRef="task1">
+            <conditionExpression xsi:type="tFormalExpression">${}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="task2"/>
+        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="task3">
+            <conditionExpression xsi:type="tFormalExpression">${conditionB}</conditionExpression>
+        </sequenceFlow>
+    </process>
+</definitions>
+```
+
+### Gateways
+
+网关用于控制执行流程（或如 BPMN 2.0 所描述的，执行令牌）。网关能够使用或生成令牌。
+
+网关以图形方式显示为菱形，里面有一个图标。图标显示网关的类型。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.gateway.png)
+
+#### 1.排他网关（Exclusive Gateway）
+
+描述：
+
+排他网关（也称为 XOR （异或）网关或更专业的基于数据的独占网关）用于对流程中的决策进行建模。当执行到达此网关时，所有传出序列流都按照定义的顺序进行评估。选择条件评估为真（或没有条件集，概念上在序列流上定义了“真”）的序列流以继续该过程。
+
+**请注意，输出序列流的语义与 BPMN 2.0 中的一般情况不同。而一般情况下，所有条件评估为真的序列流都被选择以并行方式继续，而在使用排他网关时只选择一个序列流。如果多个序列流的条件评估为真，则选择 XML 中定义的第一个（并且只有那个！）来继续该过程。如果无法选择序列流，则会抛出异常。**
+
+图形示例：
+
+排他网关可视化为典型的网关（即菱形），内部带有 X 图标，表示 XOR 语义。请注意，内部没有图标的网关默认为排他网关。BPMN 2.0 规范不允许在同一流程定义中混合带有和不带有 X 的菱形。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.exclusive.gateway.notation.png)
+
+XML示例：
+
+独占网关的 XML 表示是直截了当的：一行定义了在传出序列流上定义的网关和条件表达式。请参阅有关条件序列流（conditional sequence flow ）的部分以了解哪些选项可用于此类表达式。 以下面的模型为例：
+
+![](http://rep.shaoteemo.com/activiti/bpmn.exclusive.gateway.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="专属网关演示">
+
+    <process id="exclusive_gateway" name="exclusiveGateway">
+        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" />
+
+        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="theTask1">
+            <conditionExpression xsi:type="tFormalExpression">${input == 1}</conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="theTask2">
+            <conditionExpression xsi:type="tFormalExpression">${input == 2}</conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="flow4" sourceRef="exclusiveGw" targetRef="theTask3">
+            <conditionExpression xsi:type="tFormalExpression">${input == 3}</conditionExpression>
+        </sequenceFlow>
+    </process>
+</definitions>
+```
+
+#### 2.并行网关（Parallel Gateway）
+
+描述：
+
+网关还可用于对进程中的并发建模。在流程模型中引入并发的最直接的网关是并行网关（**Parallel Gateway**），它允许分叉到多个执行路径或加入多个传入执行路径。
+
+并行网关的功能基于传入和传出序列流：
+
+- **fork**：所有传出的序列流并行执行，为每个序列流创建一个并发执行。
+- **join**：到达并行网关的所有并发执行在网关中等待，直到每个传入序列流的执行到达。然后该过程继续通过加入网关。
+
+请注意，如果同一并行网关有多个传入和传出序列流，则并行网关可以同时具有 fork 和 join 行为。在这种情况下，网关将首先加入所有传入的序列流，然后再拆分为多个并发执行路径。
+
+**与其他网关类型的一个重要区别是并行网关不评估条件。如果在与并行网关连接的序列流上定义了条件，则它们会被忽略。**
+
+图形示例：
+
+并行网关可视化为内部带有加号的网关（菱形），指的是 AND 语义。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.parallel.gateway.png)
+
+XML示例：
+
+定义一个并行网关需要一行 XML：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="并行网关演示">
+
+    <process id="parallel_gateway" name="parallelGateway">
+        <parallelGateway id="myParallelGateway" />
+    </process>
+</definitions>
+
+```
+
+实际行为（fork、join 或两者）由连接到并行网关的序列流定义。
+
+例如，上面的模型归结为以下 XML：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="并行网关演示">
+
+    <process id="parallel_gateway" name="parallelGateway">
+        <!--文档中的案例-->
+        <startEvent id="theStart" />
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="fork" />
+
+        <parallelGateway id="fork" />
+        <sequenceFlow sourceRef="fork" targetRef="receivePayment" />
+        <sequenceFlow sourceRef="fork" targetRef="shipOrder" />
+
+        <userTask id="receivePayment" name="Receive Payment" />
+        <sequenceFlow sourceRef="receivePayment" targetRef="join" />
+
+        <userTask id="shipOrder" name="Ship Order" />
+        <sequenceFlow sourceRef="shipOrder" targetRef="join" />
+
+        <parallelGateway id="join" />
+        <sequenceFlow sourceRef="join" targetRef="archiveOrder" />
+
+        <userTask id="archiveOrder" name="Archive Order" />
+        <sequenceFlow sourceRef="archiveOrder" targetRef="theEnd" />
+
+        <endEvent id="theEnd" />
+    </process>
+</definitions>
+```
+
+上面的例子中，进程启动后，会创建两个任务：
+
+```java
+ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");
+TaskQuery query = taskService.createTaskQuery()
+                         .processInstanceId(pi.getId())
+                         .orderByTaskName()
+                         .asc();
+
+List<Task> tasks = query.list();
+assertEquals(2, tasks.size());
+
+Task task1 = tasks.get(0);
+assertEquals("Receive Payment", task1.getName());
+Task task2 = tasks.get(1);
+assertEquals("Ship Order", task2.getName());
+```
+
+当这两个任务完成时，第二个并行网关将加入两个执行，由于只有一个输出序列流，因此不会创建并发执行路径，只有存档订单任务将处于活动状态。
+
+请注意，并行网关不需要平衡（即对应并行网关的传入/传出序列流的匹配数量）。并行网关将简单地等待所有传入的序列流，并为每个传出的序列流创建一个并发执行路径，不受流程模型中其他构造的影响。因此，以下过程在 BPMN 2.0 中是合法的：
+
+![](http://rep.shaoteemo.com/activiti/bpmn.unbalanced.parallel.gateway.png)
+
+#### 3.包含网关（Inclusive Gateway）
+
+描述：
+
+包含网关可以看作是排他网关和并行网关的组合。就像排他网关一样，您可以在传出序列流上定义条件，并且包含网关将评估它们。但主要区别在于包含网关可以采用多个序列流，就像并行网关一样。
+
+包含网关的功能基于传入和传出序列流：
+
+- **fork**：评估所有传出序列流条件，并且对于评估为true的序列流条件，流将并行执行，为每个序列流创建一个并行执行。
+- **join**：到达包含网关的所有并行执行在网关中等待，直到每个具有进程令牌的传入序列流的执行到达。这是与并行网关的一个重要区别。因此换句话说，包含网关将只等待符合条件的传入序列流。加入后，该过程继续经过加入包含网关。
+
+请注意，如果同一个包含网关有多个传入和传出序列流，则包含网关可以同时具有 fork 和 join 行为。在这种情况下，网关将首先加入所有具有进程令牌的传入序列流，然后将其拆分为多个并发执行路径，以用于具有评估为 true 的条件的传出序列流。
+
+图形示例：
+
+包容性网关可视化为内部带有圆形符号的网关（菱形）。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.inclusive.gateway.png)
+
+XML示例：
+
+定义一个包容性网关需要一行 XML：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="包含网关演示">
+
+    <process id="inclusive_gateway" name="inclusiveGateway">
+        <!--定义包含网关-->
+        <inclusiveGateway id="myInclusiveGateway" />
+    </process>
+</definitions>
+```
+
+实际行为（fork、join 或两者）由连接到包含网关的序列流定义。
+
+例如，上面的模型归结为以下 XML：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="包含网关演示">
+
+    <process id="inclusive_gateway" name="inclusiveGateway">
+        <startEvent id="theStart" />
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="fork" />
+
+        <inclusiveGateway id="fork" />
+        <sequenceFlow sourceRef="fork" targetRef="receivePayment" >
+            <conditionExpression xsi:type="tFormalExpression">${paymentReceived == false}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow sourceRef="fork" targetRef="shipOrder" >
+            <conditionExpression xsi:type="tFormalExpression">${shipOrder == true}</conditionExpression>
+        </sequenceFlow>
+
+        <userTask id="receivePayment" name="Receive Payment" />
+        <sequenceFlow sourceRef="receivePayment" targetRef="join" />
+
+        <userTask id="shipOrder" name="Ship Order" />
+        <sequenceFlow sourceRef="shipOrder" targetRef="join" />
+
+        <inclusiveGateway id="join" />
+        <sequenceFlow sourceRef="join" targetRef="archiveOrder" />
+
+        <userTask id="archiveOrder" name="Archive Order" />
+        <sequenceFlow sourceRef="archiveOrder" targetRef="theEnd" />
+
+        <endEvent id="theEnd" />
+    </process>
+</definitions>
+```
+
+在上面的例子中，流程启动后，如果流程变量paymentReceived == false和shipOrder == true，则会创建两个任务。如果这些流程变量中只有一个等于 true，则只会创建一项任务。如果没有条件评估为true并抛出异常。这可以**通过指定默认的传出序列流来防止**。在以下示例中，将创建一项任务，即船舶订单任务：
+
+```java
+HashMap<String, Object> variableMap = new HashMap<String, Object>();
+          variableMap.put("receivedPayment", true);
+          variableMap.put("shipOrder", true);
+          ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");
+TaskQuery query = taskService.createTaskQuery()
+                         .processInstanceId(pi.getId())
+                         .orderByTaskName()
+                         .asc();
+
+List<Task> tasks = query.list();
+assertEquals(1, tasks.size());
+
+Task task = tasks.get(0);
+assertEquals("Ship Order", task.getName());
+```
+
+当此任务完成时，第二个包容网关将加入两次执行，并且由于只有一个传出序列流，因此不会创建并发执行路径，并且只有存档订单任务将处于活动状态。
+
+请注意，包含网关不需要平衡（即对应包含网关的传入/传出序列流的匹配数量）。包含网关将简单地等待所有传入的序列流，并为每个传出的序列流创建一个并发执行路径，不受流程模型中其他构造的影响。
+
+#### 4.事件网关（Event-based Gateway）
+
+描述：
+
+基于事件的网关允许根据事件做出决定。网关的每个传出序列流都需要连接到一个中间捕获事件。当流程执行到达基于事件的网关时，网关的行为类似于等待状态：执行被暂停。此外，对于每个传出序列流，都会创建一个事件订阅。
+
+请注意，从基于事件的网关流出的序列流不同于普通的序列流。这些序列流从未真正“执行”过。相反，它们允许流程引擎确定到达基于事件的网关的执行需要订阅哪些事件。以下限制适用：
+
+- 基于事件的网关必须有两个或多个传出序列流。
+- 基于事件的网关只能连接到仅**intermediateCatchEvent**的元素。 （Activiti 不支持在基于事件的网关之后接收任务。）
+- 连接到基于事件的网关的 **intermediateCatchEvent** 必须具有单个传入序列流。
+
+图形示例：
+
+一个基于事件的网关被可视化为一个菱形，就像其他 BPMN 网关一样，里面有一个特殊的图标。
+
+![](http://rep.shaoteemo.com/activiti/bpmn.event.based.gateway.notation.png)
+
+XML示例：
+
+用于定义基于事件的网关的 XML 元素是 eventBasedGateway。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="事件网关演示">
+
+    <process id="event-based_gateway" name="event-basedGateway">
+        <!--事件网关-->
+        <eventBasedGateway id="eventBasedGateway"/>
+    </process>
+</definitions>
+```
+
+例子：
+
+以下流程是基于事件的网关流程的示例。当执行到达基于事件的网关时，流程执行被暂停。此外，流程实例订阅警报信号事件并创建一个定时器，该定时器在 10 分钟后触发。这有效地导致流程引擎等待十分钟以等待信号事件。如果信号在 10 分钟内发生，则取消定时器并在信号后继续执行。如果未触发信号，则在计时器之后继续执行并取消信号订阅。
+
+![](http://rep.shaoteemo.com/bpmn.event.based.gateway.example.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="事件网关演示">
+
+    <!--文档案例-->
+    <signal id="alertSignal" name="alert" />
+
+    <process id="catchSignal">
+
+        <startEvent id="start" />
+
+        <sequenceFlow sourceRef="start" targetRef="gw1" />
+
+        <eventBasedGateway id="gw1" />
+
+        <sequenceFlow sourceRef="gw1" targetRef="signalEvent" />
+        <sequenceFlow sourceRef="gw1" targetRef="timerEvent" />
+
+        <intermediateCatchEvent id="signalEvent" name="Alert">
+            <signalEventDefinition signalRef="alertSignal" />
+        </intermediateCatchEvent>
+
+        <intermediateCatchEvent id="timerEvent" name="Alert">
+            <timerEventDefinition>
+                <timeDuration>PT10M</timeDuration>
+            </timerEventDefinition>
+        </intermediateCatchEvent>
+
+        <sequenceFlow sourceRef="timerEvent" targetRef="exGw1" />
+        <sequenceFlow sourceRef="signalEvent" targetRef="task" />
+
+        <userTask id="task" name="Handle alert"/>
+
+        <exclusiveGateway id="exGw1" />
+
+        <sequenceFlow sourceRef="task" targetRef="exGw1" />
+        <sequenceFlow sourceRef="exGw1" targetRef="end" />
+
+        <endEvent id="end" />
+    </process>
+</definitions>
+```
+
+### Task
+
+#### 1.用户任务（User Task）
+

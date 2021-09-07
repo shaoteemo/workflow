@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="表达式序列流演示">
+
+    <process id="conditional_sequence_flow" name="conditionalSequenceFlow">
+        <sequenceFlow id="flow" sourceRef="theStart" targetRef="theTask">
+            <conditionExpression xsi:type="tFormalExpression">
+                <![CDATA[${order.price > 100 && order.price < 250}]]>
+            </conditionExpression>
+        </sequenceFlow>
+        <!--示例通过 getter 以典型的 JavaBean 样式引用流程变量的数据。-->
+        <conditionExpression xsi:type="tFormalExpression">
+            <![CDATA[${order.price > 100 && order.price < 250}]]>
+        </conditionExpression>
+        <!--示例调用解析为布尔值的方法。-->
+        <conditionExpression xsi:type="tFormalExpression">
+            <![CDATA[${order.isStandardOrder()}]]>
+        </conditionExpression>
+    </process>
+</definitions>
