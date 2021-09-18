@@ -3,6 +3,7 @@ package com.shaoteemo.config;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.shaoteemo.listener.MyEventListener;
 import org.activiti.engine.ProcessEngine;
+import org.activiti.engine.impl.cfg.DelegateExpressionFieldInjectionMode;
 import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;
 import org.activiti.engine.runtime.Clock;
 import org.activiti.engine.test.ActivitiRule;
@@ -106,6 +107,10 @@ public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration {
 
         //关闭Activiti引擎自动生成流程图片
 //        configuration.setCreateDiagramOnDeploy(false);
+
+        //配置流程引擎为禁用在委托表达式上使用字段注入(用于规范安全的Java Service中字段的安全注入。详见文档：Java服务任务)
+//        configuration.setDelegateExpressionFieldInjectionMode(DelegateExpressionFieldInjectionMode.DISABLED);
+
         return configuration;
     }
 

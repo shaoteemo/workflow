@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="脚本任务演示">
+
+    <process id="scriptTask" name="Script Task">
+        <!--scriptFormat：指定脚本类型。具体规范详见文档-->
+        <scriptTask id="theScriptTask" name="Execute script" scriptFormat="groovy">
+            <script>
+                sum = 0
+                for ( i in inputArray ) {
+                sum += i
+                }
+            </script>
+        </scriptTask>
+
+        <!--设置自动存储变量。默认值：false-->
+        <scriptTask id="script" scriptFormat="JavaScript" activiti:autoStoreVariables="false"/>
+
+        <!--脚本结果接受.resultVariable：变量名-->
+        <scriptTask id="theScriptTask2" name="Execute script" scriptFormat="juel" activiti:resultVariable="myVar">
+            <script>#{echo}</script>
+        </scriptTask>
+
+    </process>
+</definitions>

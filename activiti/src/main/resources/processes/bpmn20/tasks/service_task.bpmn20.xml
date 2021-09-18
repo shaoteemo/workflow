@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Java服务任务演示">
+
+    <process id="service_task" name="serviceTask">
+        <!--activiti:class:-->
+        <serviceTask id="javaService" name="My Java Service Task" activiti:class="org.activiti.MyJavaDelegate" />
+
+        <!--Bean容器管理的服务执行-->
+        <serviceTask id="serviceTask" activiti:delegateExpression="${delegateExpressionBean}" />
+
+        <!--调用无参方法-->
+        <serviceTask id="javaService2" name="My Java Service Task" activiti:expression="#{printer.printMessage()}" />
+
+        <!--调用有参方法-->
+        <serviceTask id="javaService3" name="My Java Service Task" activiti:expression="#{printer.printMessage(execution, myVar)}" />
+
+        <!--属性读取-->
+        <serviceTask id="javaService4" name="My Java Service Task" activiti:expression="#{split.ready}" />
+
+        <!--使用actviti:class在类中属性常量注入.使用方法见文档-->
+        <serviceTask id="javaService5"
+                     name="Java service invocation"
+                     activiti:class="org.activiti.examples.bpmn.servicetask.ToUpperCaseFieldInjected">
+            <extensionElements>
+                <!--name：对应属性名-->
+                <activiti:field name="text" stringValue="Hello World" />
+            </extensionElements>
+        </serviceTask>
+        <!--上面标签的长文本的使用-->
+        <serviceTask id="javaService6"
+                     name="Java service invocation"
+                     activiti:class="org.activiti.examples.bpmn.servicetask.ToUpperCaseFieldInjected">
+            <extensionElements>
+                <activiti:field name="text">
+                    <activiti:string>
+                        This is a long string with a lot of words and potentially way longer even!
+                    </activiti:string>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+
+        <serviceTask id="javaService7" name="Java service invocation"
+                     activiti:class="org.activiti.examples.bpmn.servicetask.ReverseStringsFieldInjected">
+
+            <extensionElements>
+                <activiti:field name="text1">
+                    <activiti:expression>${genderBean.getGenderString(gender)}</activiti:expression>
+                </activiti:field>
+                <activiti:field name="text2">
+                    <activiti:expression>Hello ${gender == 'male' ? 'Mr.' : 'Mrs.'} ${name}</activiti:expression>
+                </activiti:field>
+                <!--上面的两个标签可以写成线面的形式-->
+                <activiti:field name="text1" expression="${genderBean.getGenderString(gender)}" />
+                <activiti:field name="text1" expression="Hello ${gender == 'male' ? 'Mr.' : 'Mrs.'} ${name}" />
+            </ extensionElements>
+        </ serviceTask>
+
+        <!--
+            下面两个为不安全的属性注入方式示例
+        -->
+        <serviceTask id="serviceTask1" activiti:delegateExpression="${someJavaDelegateBean}">
+            <extensionElements>
+                <activiti:field name="someField" expression="${input * 2}"/>
+            </extensionElements>
+        </serviceTask>
+
+        <!-- other process definition elements -->
+
+        <serviceTask id="serviceTask2" activiti:delegateExpression="${someJavaDelegateBean}">
+            <extensionElements>
+                <activiti:field name="someField" expression="${input * 2000}"/>
+            </extensionElements>
+        </serviceTask>
+
+        <!--使用DelegateHelper-->
+        <extensionElements>
+            <activiti:executionListener
+                    delegateExpression="${testExecutionListener}" event="start">
+                <activiti:field name="input" expression="${startValue}" />
+                <activiti:field name="resultVar" stringValue="processStartValue" />
+            </activiti:executionListener>
+        </extensionElements>
+
+        <!--服务任务结果获取：结果会到myVar流程变量中-->
+        <serviceTask id="aMethodExpressionServiceTask" activiti:expression="#{myService.doSomething()}" activiti:resultVariable="myVar" />
+
+        <!--异常映射处理-->
+        <serviceTask id="servicetask1" name="Service Task" activiti:class="...">
+            <extensionElements>
+                <activiti:mapException
+                        errorCode="myErrorCode1">org.activiti.SomeException</activiti:mapException>
+            </extensionElements>
+        </serviceTask>
+
+        <!--映射某个异常的所有子异常-->
+        <serviceTask id="servicetask2" name="Service Task" activiti:class="...">
+            <extensionElements>
+                <activiti:mapException errorCode="myErrorCode1"
+                                       includeChildExceptions="true">org.activiti.SomeException</activiti:mapException>
+            </extensionElements>
+        </serviceTask>
+
+        <!--没有实体类的异常映射-->
+        <serviceTask id="servicetask3" name="Service Task" activiti:class="...">
+            <extensionElements>
+                <activiti:mapException errorCode="myErrorCode1"/>
+            </extensionElements>
+        </serviceTask>
+    </process>
+</definitions>

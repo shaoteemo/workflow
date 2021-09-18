@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="用户任务演示">
+
+    <process id="user_task" name="userTask">
+        <!--一个基本的userTask-->
+        <userTask id="theTask" name="Important task"/>
+
+        <!--增加文档描述的UserTask-->
+        <userTask id="theTask2" name="Schedule meeting" >
+            <documentation>
+                Schedule an engineering meeting for next week with the new hire.
+            </documentation>
+        </userTask>
+
+        <!--具有过期时间的UserTask-->
+        <userTask id="theTask3" name="Important task" activiti:dueDate="${dateVariable}"/>
+
+        <!--指定分配用户-->
+        <userTask id='theTask4' name='important task' >
+            <humanPerformer>
+                <resourceAssignmentExpression>
+                    <formalExpression>kermit</formalExpression>
+                </resourceAssignmentExpression>
+            </humanPerformer>
+        </userTask>
+
+        <!--指定候选人列表或组-->
+        <userTask id='theTask5' name='important task' >
+            <potentialOwner>
+                <resourceAssignmentExpression>
+                    <formalExpression>user(kermit), group(management)</formalExpression>
+                </resourceAssignmentExpression>
+            </potentialOwner>
+        </userTask>
+
+        <!--任务分配Activiti扩展-->
+        <!--指定分配用户-->
+        <userTask id="theTask6" name="my task" activiti:assignee="kermit"/>
+
+        <!--任务候选人(只能是候选人)-->
+        <userTask id="theTask7" name="my task" activiti:candidateUsers="kermit, gonzo"/>
+
+        <!--任务候选组(只能是组)-->
+        <userTask id="theTask8" name="my task" activiti:candidateGroups="management, accountancy"/>
+
+        <!--(实验性的)自定义扩展链接类型-->
+        <userTask id="theTask9" name="make profit">
+            <extensionElements>
+                <activiti:customResource activiti:name="businessAdministrator">
+                    <resourceAssignmentExpression>
+                        <formalExpression>user(kermit), group(management)</formalExpression>
+                    </resourceAssignmentExpression>
+                </activiti:customResource>
+            </extensionElements>
+        </userTask>
+    </process>
+</definitions>
