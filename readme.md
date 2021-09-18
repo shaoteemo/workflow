@@ -28,7 +28,7 @@
 
    1.[官方代码示例](https://github.com/AlfrescoArchive/activiti-examples)
 
-   2.[官方前端APP]([Activiti-AngularApp](https://github.com/AlfrescoArchive/Activiti-AngularApp))
+   2.[官方前端APPActiviti-AngularApp](https://github.com/AlfrescoArchive/Activiti-AngularApp)
 
    3.[Activiti Modeling Application](https://github.com/Activiti/activiti-modeling-app)
 
