@@ -2,7 +2,7 @@
 
 ## 一、说明
 
-本仓库为基于Java语言中常见工作流引擎教程。以翻译官方文档及部分案例演示为主，同时还有项目搭建及配置综合等常用的公共代码用于复制。文档翻译以及文档排版目前正在优化中。
+本仓库为基于Java语言中常见工作流引擎教程。以翻译官方文档及部分案例演示为主，同时还有项目搭建及配置综合等常用的公共代码用于复制。文档翻译以及文档排版目前正在优化中。本仓库更多的是个人对某邻域的技术积淀。
 
 ## 二、包含内容及状态
 
@@ -23,6 +23,16 @@
    版本：--
 
    待更新……
+   
+4. 一些相关的开源框架或开源项目
+
+   1.[官方代码示例](https://github.com/AlfrescoArchive/activiti-examples)
+
+   2.[官方前端APP]([Activiti-AngularApp](https://github.com/AlfrescoArchive/Activiti-AngularApp))
+
+   3.[Activiti Modeling Application](https://github.com/Activiti/activiti-modeling-app)
+
+   3.[compileflow](https://github.com/alibaba/compileflow)
 
 ## 三、使用须知
 
