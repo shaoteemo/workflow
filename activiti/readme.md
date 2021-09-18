@@ -1,4 +1,10 @@
-# Activiti6.0.0实践报告（草稿官方文档）
+# Activiti指南（草稿）
+
+## 写在前面
+
+撰写人：ShaoTeemo
+
+本文档翻译原文档为[官方文档](https://www.activiti.org/userguide/)。其中包含了项目搭建过程的文件信息。文中出现的译著为本人(译者)观点。
 
 ## 环境概述
 
@@ -7,6 +13,7 @@
 | Spring-Boot | 2.5.1  |
 |  Activiti   | 6.0.0  |
 |    MySQL    | 5.7    |
+| Oracle JDK  | 1.8.x  |
 
 ## 开始
 
