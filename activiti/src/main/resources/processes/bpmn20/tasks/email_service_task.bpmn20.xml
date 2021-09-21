@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="邮件服务任务演示">
+
+    <process id="email_service_task">
+        <!--由于邮件服务是专有的服务任务 ，因此没有类似的emailTask-->
+        <serviceTask id="sendMail" activiti:type="mail"/>
+
+        <!--用法示例-->
+        <serviceTask id="sendMail2" activiti:type="mail">
+            <extensionElements>
+                <activiti:field name="from" stringValue="order-shipping@thecompany.com"/>
+                <activiti:field name="to" expression="${recipient}"/>
+                <activiti:field name="subject" expression="Your order ${orderId} has been shipped"/>
+                <activiti:field name="html">
+                    <activiti:expression>
+                        <![CDATA[
+          <html>
+            <body>
+              Hello ${male ? 'Mr.' : 'Mrs.' } ${recipientName},<br/><br/>
+
+              As of ${now}, your order has been <b>processed and shipped</b>.<br/><br/>
+
+              Kind regards,<br/>
+
+              TheCompany.
+            </body>
+          </html>
+        ]]>
+                    </activiti:expression>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+    </process>
+
+</definitions>

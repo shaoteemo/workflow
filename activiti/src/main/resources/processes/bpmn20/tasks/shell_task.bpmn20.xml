@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Shell任务演示">
+
+    <process id="shell_task">
+        <!--Shell Task定义-->
+        <serviceTask id="shellEcho" activiti:type="shell"/>
+
+        <!--一个简单的用法示例-->
+        <serviceTask id="shellEcho2" activiti:type="shell" >
+            <extensionElements>
+                <activiti:field name="command" stringValue="cmd" />
+                <activiti:field name="arg1" stringValue="/c" />
+                <activiti:field name="arg2" stringValue="echo" />
+                <activiti:field name="arg3" stringValue="EchoTest" />
+                <activiti:field name="wait" stringValue="true" />
+                <activiti:field name="outputVariable" stringValue="resultVar" />
+            </extensionElements>
+        </serviceTask>
+    </process>
+
+</definitions>

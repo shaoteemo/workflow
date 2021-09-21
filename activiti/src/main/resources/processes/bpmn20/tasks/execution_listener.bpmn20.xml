@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Execution监听器演示">
+
+    <process id="execution_listener">
+        <!--Activiti 5.12 新的脚本监听器允许执行脚本-->
+        <extensionElements>
+            <activiti:executionListener event="start" class="org.activiti.engine.impl.bpmn.listener.ScriptExecutionListener" >
+                <activiti:field name="script">
+                    <activiti:string>
+                        def bar = "BAR";  // local variable
+                        foo = "FOO"; // pushes variable to execution context
+                        execution.setVariable("var1", "test"); // test access to execution instance
+                        bar // implicit return value
+                    </activiti:string>
+                </activiti:field>
+                <activiti:field name="language" stringValue="groovy" />
+                <activiti:field name="resultVariable" stringValue="myVar" />
+            </activiti:executionListener>
+        </extensionElements>
+    </process>
+
+    <!--案例-->
+    <process id="executionListenersProcess">
+
+        <extensionElements>
+            <activiti:executionListener class="org.activiti.examples.bpmn.executionlistener.ExampleExecutionListenerOne" event="start" />
+        </extensionElements>
+
+        <startEvent id="theStart" />
+        <sequenceFlow sourceRef="theStart" targetRef="firstTask" />
+
+        <userTask id="firstTask" />
+        <sequenceFlow sourceRef="firstTask" targetRef="secondTask">
+            <extensionElements>
+                <activiti:executionListener class="org.activiti.examples.bpmn.executionListener.ExampleExecutionListenerTwo" />
+            </extensionElements>
+        </sequenceFlow>
+
+        <userTask id="secondTask" >
+            <extensionElements>
+                <activiti:executionListener expression="${myPojo.myMethod(execution.event)}" event="end" />
+            </extensionElements>
+        </userTask>
+        <sequenceFlow sourceRef="secondTask" targetRef="thirdTask" />
+
+        <userTask id="thirdTask" />
+        <sequenceFlow sourceRef="thirdTask" targetRef="theEnd" />
+
+        <endEvent id="theEnd" />
+
+    </process>
+
+    <!--为监听器注入属性-->
+    <process id="executionListenersProcess">
+        <extensionElements>
+            <activiti:executionListener class="org.activiti.examples.bpmn.executionListener.ExampleFieldInjectedExecutionListener" event="start">
+                <activiti:field name="fixedValue" stringValue="Yes, I am " />
+                <activiti:field name="dynamicValue" expression="${myVar}" />
+            </activiti:executionListener>
+        </extensionElements>
+
+        <startEvent id="theStart" />
+        <sequenceFlow sourceRef="theStart" targetRef="firstTask" />
+
+        <userTask id="firstTask" />
+        <sequenceFlow sourceRef="firstTask" targetRef="theEnd" />
+
+        <endEvent id="theEnd" />
+    </process>
+
+</definitions>

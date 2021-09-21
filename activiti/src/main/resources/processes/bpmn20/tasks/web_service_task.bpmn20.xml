@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- auth:ShaoTeemo -->
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Web服务任务演示">
+
+    <!--
+        使用Web服务任务需要导入如下命名空间。
+        location:Web服务地址
+    -->
+    <import importType="http://schemas.xmlsoap.org/wsdl/"
+            location="http://localhost:63081/counter?wsdl"
+            namespace="http://webservice.activiti.org/" />
+
+    <!--请求与响应消息定义，与对应项定义-->
+    <message id="prettyPrintCountRequestMessage" itemRef="tns:prettyPrintCountRequestItem" />
+    <message id="prettyPrintCountResponseMessage" itemRef="tns:prettyPrintCountResponseItem" />
+
+    <itemDefinition id="prettyPrintCountRequestItem" structureRef="counter:prettyPrintCount" />
+    <itemDefinition id="prettyPrintCountResponseItem" structureRef="counter:prettyPrintCountResponse" />
+
+    <!--接口定义。（以下为计数器接口）-->
+    <interface name="Counter Interface" implementationRef="counter:Counter">
+        <operation id="prettyPrintCountOperation" name="prettyPrintCount Operation"
+                   implementationRef="counter:prettyPrintCount">
+            <inMessageRef>tns:prettyPrintCountRequestMessage</inMessageRef>
+            <outMessageRef>tns:prettyPrintCountResponseMessage</outMessageRef>
+        </operation>
+    </interface>
+
+    <process id="web_service_task" name="webServiceTask">
+        <!--Web服务声明-->
+        <serviceTask id="webService"
+                     name="Web service invocation"
+                     implementation="##WebService"
+                     operationRef="tns:prettyPrintCountOperation">
+            <!--I/O定义-->
+            <ioSpecification>
+                <dataInput itemSubjectRef="tns:prettyPrintCountRequestItem" id="dataInputOfServiceTask" />
+                <dataOutput itemSubjectRef="tns:prettyPrintCountResponseItem" id="dataOutputOfServiceTask" />
+                <inputSet>
+                    <dataInputRefs>dataInputOfServiceTask</dataInputRefs>
+                </inputSet>
+                <outputSet>
+                    <dataOutputRefs>dataOutputOfServiceTask</dataOutputRefs>
+                </outputSet>
+            </ioSpecification>
+
+            <!--指定数据输入关联-->
+            <dataInputAssociation>
+                <sourceRef>dataInputOfProcess</sourceRef>
+                <targetRef>dataInputOfServiceTask</targetRef>
+                <assignment>
+                    <from>${dataInputOfProcess.prefix}</from>
+                    <to>${dataInputOfServiceTask.prefix}</to>
+                </assignment>
+                <assignment>
+                    <from>${dataInputOfProcess.suffix}</from>
+                    <to>${dataInputOfServiceTask.suffix}</to>
+                </assignment>
+            </dataInputAssociation>
+            <!--第二种数据输入关联-->
+            <dataInputAssociation>
+                <sourceRef>PrefixVariable</sourceRef>
+                <targetRef>prefix</targetRef>
+            </dataInputAssociation>
+            <dataInputAssociation>
+                <sourceRef>SuffixVariable</sourceRef>
+                <targetRef>suffix</targetRef>
+            </dataInputAssociation>
+
+            <!--指定数据输出关联-->
+            <dataOutputAssociation>
+                <targetRef>dataOutputOfProcess</targetRef>
+                <transformation>${dataOutputOfServiceTask.prettyPrint}</transformation>
+            </dataOutputAssociation>
+
+            <!--第二种数据输出关联-->
+            <dataOutputAssociation>
+                <sourceRef>prettyPrint</sourceRef>
+                <targetRef>OutputVariable</targetRef>
+            </dataOutputAssociation>
+
+        </serviceTask>
+    </process>
+
+</definitions>

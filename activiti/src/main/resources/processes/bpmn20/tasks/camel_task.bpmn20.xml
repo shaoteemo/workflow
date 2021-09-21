@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Camel任务演示">
+
+    <process id="camel_task">
+        <!--Camel任务定义-->
+        <serviceTask id="sendCamel" activiti:type="camel"/>
+
+        <!--使用不同的Bean名称-->
+        <serviceTask id="serviceTask1" activiti:type="camel">
+            <extensionElements>
+                <activiti:field name="camelContext" stringValue="customCamelContext" />
+            </extensionElements>
+        </serviceTask>
+
+        <!--用于配置Camel的行为配置-->
+        <serviceTask id="serviceTask1" activiti:type="camel">
+            <extensionElements>
+                <activiti:field name="camelBehaviorClass" stringValue="org.activiti.camel.impl.CamelBehaviorCamelBodyImpl" />
+            </extensionElements>
+        </serviceTask>
+
+        <!--异步Camel-->
+        <serviceTask id="serviceAsyncPing" activiti:type="camel" activiti:async="true"/>
+        <!--接受异步camel消息-->
+        <receiveTask id="receiveAsyncPing" name="Wait State" />
+
+    </process>
+
+    <!--简单的调用示例-->
+    <process id="SimpleCamelCallProcess">
+        <startEvent id="start"/>
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="simpleCall"/>
+
+        <serviceTask id="simpleCall" activiti:type="camel"/>
+
+        <sequenceFlow id="flow2" sourceRef="simpleCall" targetRef="end"/>
+        <endEvent id="end"/>
+    </process>
+
+    <!--Ping-Pong案例-->
+    <process id="PingPongProcess">
+        <startEvent id="start"/>
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="ping"/>
+        <serviceTask id="ping" activiti:type="camel"/>
+        <sequenceFlow id="flow2" sourceRef="ping" targetRef="saveOutput"/>
+        <serviceTask id="saveOutput"  activiti:class="org.activiti.camel.examples.pingPong.SaveOutput" />
+        <sequenceFlow id="flow3" sourceRef="saveOutput" targetRef="end"/>
+        <endEvent id="end"/>
+    </process>
+
+</definitions>

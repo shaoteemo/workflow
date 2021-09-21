@@ -115,5 +115,15 @@
                 <activiti:mapException errorCode="myErrorCode1"/>
             </extensionElements>
         </serviceTask>
+
+        <!--分支流程以防止某些异常发生-->
+        <serviceTask id="javaService01"
+                     name="Java service invocation"
+                     activiti:class="org.activiti.ThrowsExceptionBehavior">
+        </serviceTask>
+
+        <sequenceFlow id="no-exception" sourceRef="javaService01" targetRef="theEnd" />
+        <sequenceFlow id="exception" sourceRef="javaService01" targetRef="fixException" />
+
     </process>
 </definitions>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Mule任务演示">
+
+    <process id="mule_task">
+        <!--mule任务定义-->
+        <serviceTask id="sendMule" activiti:type="mule">
+            <!--用法示例-->
+            <extensionElements>
+                <activiti:field name="endpointUrl">
+                    <activiti:string>vm://in</activiti:string>
+                </activiti:field>
+                <activiti:field name="language">
+                    <activiti:string>juel</activiti:string>
+                </activiti:field>
+                <activiti:field name="payloadExpression">
+                    <activiti:string>"hi"</activiti:string>
+                </activiti:field>
+                <activiti:field name="resultVariable">
+                    <activiti:string>theVariable</activiti:string>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+    </process>
+
+</definitions>

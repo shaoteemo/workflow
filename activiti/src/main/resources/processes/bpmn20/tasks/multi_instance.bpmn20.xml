@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="多实例演示">
+
+    <process id="multi_instance">
+        <userTask>
+            <!--多实例定义-->
+            <multiInstanceLoopCharacteristics isSequential="false|true">
+                <!--次数-->
+                <loopCardinality>5</loopCardinality>
+                <!--正则表示次数-->
+                <loopCardinality>${nrOfOrders-nrOfCancellations}</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+        </userTask>
+
+        <!--多实例分配-->
+        <userTask id="miTasks" name="My Task ${loopCounter}" activiti:assignee="${assignee}">
+            <multiInstanceLoopCharacteristics isSequential="false">
+                <loopDataInputRef>assigneeList</loopDataInputRef>
+                <inputDataItem name="assignee" />
+            </multiInstanceLoopCharacteristics>
+        </userTask>
+        <!--上面的另一种简单易记支持表达式的方式-->
+        <userTask id="miTasks2" name="My Task" activiti:assignee="${assignee}">
+            <multiInstanceLoopCharacteristics isSequential="true"
+                                              activiti:collection="${myService.resolveUsersForTask()}" activiti:elementVariable="assignee" >
+            </multiInstanceLoopCharacteristics>
+        </userTask>
+
+        <!--控制多实例结束-->
+        <userTask id="miTasks3" name="My Task" activiti:assignee="${assignee}">
+            <multiInstanceLoopCharacteristics isSequential="false"
+                                              activiti:collection="assigneeList" activiti:elementVariable="assignee" >
+                <completionCondition>${nrOfCompletedInstances/nrOfInstances >= 0.6 }</completionCondition>
+            </multiInstanceLoopCharacteristics>
+        </userTask>
+
+        <!--多实例监听器-->
+        <userTask>
+            <extensionElements>
+                <activiti:executionListener event="start" class="org.activiti.MyStartListener"/>
+                <activiti:executionListener event="end" class="org.activiti.MyEndListener"/>
+            </extensionElements>
+        </userTask>
+
+        <!--一个关于多实例监听器案例-->
+        <subProcess id="subprocess1" name="Sub Process">
+            <extensionElements>
+                <activiti:executionListener event="start" class="org.activiti.MyStartListener"/>
+                <activiti:executionListener event="end" class="org.activiti.MyEndListener"/>
+            </extensionElements>
+            <multiInstanceLoopCharacteristics isSequential="false">
+                <loopDataInputRef>assignees</loopDataInputRef>
+                <inputDataItem name="assignee"></inputDataItem>
+            </multiInstanceLoopCharacteristics>
+            <startEvent id="startevent2" name="Start"></startEvent>
+            <endEvent id="endevent2" name="End"></endEvent>
+            <sequenceFlow id="flow3" name="" sourceRef="startevent2" targetRef="endevent2"></sequenceFlow>
+        </subProcess>
+    </process>
+
+</definitions>

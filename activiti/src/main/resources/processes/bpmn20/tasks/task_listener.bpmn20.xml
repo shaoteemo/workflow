@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="任务监听器演示">
+
+    <process id="task_listener">
+        <userTask id="myTask" name="My Task" >
+            <!--定义任务监听器-->
+            <extensionElements>
+                <activiti:taskListener event="create" class="org.activiti.MyTaskCreateListener" />
+                <!--表达式-->
+                <activiti:taskListener event="create" expression="${myObject.callMethod(task, task.eventName)}" />
+                <!--委托表达式-->
+                <activiti:taskListener event="create" delegateExpression="${myTaskListenerBean}" />
+                <!--Activiti 5.12 新的脚本监听器的使用-->
+                <activiti:taskListener event="complete" class="org.activiti.engine.impl.bpmn.listener.ScriptTaskListener" >
+                    <activiti:field name="script">
+                        <activiti:string>
+                            def bar = "BAR";  // local variable
+                            foo = "FOO"; // pushes variable to execution context
+                            task.setOwner("kermit"); // test access to task instance
+                            bar // implicit return value
+                        </activiti:string>
+                    </activiti:field>
+                    <activiti:field name="language" stringValue="groovy" />
+                    <activiti:field name="resultVariable" stringValue="myVar" />
+                </activiti:taskListener>
+            </extensionElements>
+        </userTask>
+    </process>
+
+</definitions>
