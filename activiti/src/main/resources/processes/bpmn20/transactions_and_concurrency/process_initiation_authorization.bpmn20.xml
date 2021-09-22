@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="流程启动权限演示">
+
+    <process id="process_initiation_authorization" name="process_initiation_authorization">
+        <extensionElements>
+            <activiti:potentialStarter>
+                <resourceAssignmentExpression>
+                    <formalExpression>group2, group(group3), user(user3)</formalExpression>
+                </resourceAssignmentExpression>
+            </activiti:potentialStarter>
+        </extensionElements>
+
+        <startEvent id="theStart"/>
+        <!--……-->
+    </process>
+
+    <process id="potentialStarter" activiti:candidateStarterUsers="user1, user2"
+             activiti:candidateStarterGroups="group1">
+    ...
+    </process>
+</definitions>

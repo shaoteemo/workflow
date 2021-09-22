@@ -4,7 +4,7 @@
 
 撰写人：ShaoTeemo
 
-本文档翻译原文档为[官方文档](https://www.activiti.org/userguide/)。其中包含了项目搭建过程的文件信息。文中出现的译注为本人(译者)观点。
+本文档翻译原文档为[官方文档](https://www.activiti.org/userguide/)。其中包含了项目搭建过程的文件信息。文中出现的译注为本人(译者)观点。**注意：本文档并不会完全翻译所有章节，只会翻译核心内容。**
 
 ## 环境概述
 
@@ -3151,4 +3151,701 @@ loopDataInputRef 和 inputDataItem 的缺点是 1) 名称很难记住 2) 由于 
 ```
 
 ### Sub-Processes and Call Activities
+
+#### 1.子流程（Sub-Process）
+
+##### 描述
+
+子流程是包含其他活动、网关、事件等的活动。它本身形成一个过程，是更大过程的一部分。子进程完全定义在父进程内（这就是为什么它通常被称为嵌入式子进程）。 
+
+子流程有两个主要用例：
+
+- 子流程允许分层建模。许多建模工具允许折叠子流程，隐藏子流程的所有细节并显示业务流程的高级端到端概述。
+- 子流程为事件创建新的范围。在子流程执行期间抛出的事件可以被子流程边界上的边界事件捕获，而为该事件创建一个仅限于子流程的范围。
+
+使用子流程确实会施加一些限制：
+
+- 一个子流程只能有一个非启动事件，不允许有其他启动事件类型。一个子流程必须至少有一个结束事件。请注意，BPMN 2.0 规范允许省略子流程中的开始和结束事件，但当前的 Activiti 实现不支持这一点。
+- **序列流不能跨越子流程边界。**
+
+##### 图形示例
+
+一个子流程被可视化为一个典型的活动，即一个圆角矩形。如果子流程被折叠，则只显示名称和加号，提供流程的高级概述：
+
+![](http://rep.shaoteemo.com/bpmn.collapsed.subprocess.png)
+
+如果子流程被展开，子流程的步骤将显示在子流程边界内：
+
+![](http://rep.shaoteemo.com/bpmn.expanded.subprocess.png)
+
+使用子流程的主要原因之一是为某个事件定义范围。以下流程模型突出了这一点：*investigate software/investigate hardware*任务都需要并行完成，但是这两项任务都需要在咨询等级 2 支持之前的特定时间内完成。在这里，计时器的范围（即哪些活动必须及时完成）受子流程的约束。
+
+![](http://rep.shaoteemo.com/bpmn.subprocess.with.boundary.timer.png)
+
+##### XML示例
+
+子流程由子流程元素定义。作为子流程一部分的所有活动、网关、事件等都需要包含在此元素中。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="子流程演示">
+
+    <process id="sub_process" name="sub_process">
+
+        <!--定义一个子流程-->
+        <subProcess id="subProcess">
+
+            <startEvent id="subProcessStart" />
+
+            <!--... other Sub-Process elements ...-->
+
+            <endEvent id="subProcessEnd" />
+
+        </subProcess>
+    </process>
+</definitions>
+```
+
+#### 2.事件子流程（Event Sub-Process）
+
+##### 描述
+
+事件子流程是 BPMN 2.0 中的新增内容。事件子流程是由事件触发的子流程。可以在流程级别或任何子流程级别添加事件子流程。用于触发事件子流程的事件是使用开始事件配置的。由此可知，事件子流程不支持任何启动事件。事件子流程可以使用消息事件、错误事件、信号事件、计时器事件或补偿事件等事件触发。当创建托管事件子流程的范围（流程实例或子流程）时，将创建对开始事件的订阅。当范围被销毁时，订阅被删除。
+
+事件子流程可以是中断的或非中断的。中断子流程会取消当前范围内的任何执行。一个非中断的事件子流程产生一个新的并发执行。虽然中断事件子流程只能为托管它的范围的每次激活触发一次，但非中断事件子流程可以触发多次。子流程是否中断的事实是使用触发事件子流程的开始事件配置的。
+
+事件子流程不得有任何传入或传出序列流。由于事件子流程是由事件触发的，因此传入的序列流没有意义。当事件子流程结束时，当前范围结束（在中断事件子流程的情况下），或者为非中断子流程产生的并发执行结束。
+
+**当前限制：**
+
+- Activiti 只支持中断事件子流程。
+- Activiti 仅支持使用错误启动事件或消息启动事件触发的事件子流程。
+
+##### 图形示例
+
+一个事件子流程可能被可视化为一个带有虚线轮廓的嵌入式子流程。
+
+![](http://rep.shaoteemo.com/bpmn.subprocess.eventSubprocess.png)
+
+##### XML示例
+
+事件子流程以与嵌入子流程相同的方式使用 XML 表示。此外，属性 triggerByEvent 必须具有值 true：
+
+```xml
+<!--事件子流程定义-->
+<subProcess id="eventSubProcess" triggeredByEvent="true">
+    <!--...-->
+</subProcess>
+```
+
+##### 例子
+
+以下是使用错误启动事件触发的事件子流程的示例。事件子流程位于“流程级别”，即范围为流程实例：
+
+![](http://rep.shaoteemo.com/bpmn.subprocess.eventSubprocess.example.1.png)
+
+这是事件子流程在 XML 中的样子：
+
+```xml
+<!--案例1的XML标识-->
+<subProcess id="eventSubProcess2" triggeredByEvent="true">
+    <startEvent id="catchError">
+        <errorEventDefinition errorRef="error" />
+    </startEvent>
+    <sequenceFlow id="flow2" sourceRef="catchError" targetRef="taskAfterErrorCatch" />
+    <userTask id="taskAfterErrorCatch" name="Provide additional data" />
+</subProcess>
+```
+
+如前所述，事件子流程也可以添加到嵌入式子流程中。如果将其添加到嵌入式子流程中，它将成为边界事件的替代方案。考虑以下两个流程图。在这两种情况下，嵌入式子流程都会引发错误事件。两次都使用 用户任务捕获和处理错误。
+
+![](http://rep.shaoteemo.com/bpmn.subprocess.eventSubprocess.example.2a.png)
+
+与：
+
+![](http://rep.shaoteemo.com/bpmn.subprocess.eventSubprocess.example.2b.png)
+
+在这两种情况下，都会执行相同的任务。但是，两种建模方案之间存在差异：
+
+- 嵌入的子流程使用与执行它所在相同的作用域来执行。这意味着嵌入式子流程可以访问其范围内的本地变量。当使用边界事件时，为执行嵌入的子流程而创建的执行被离开边界事件的序列流删除。这意味着由嵌入式子流程创建的变量不再可用。
+- 使用事件子流程时，事件完全由添加到的子流程处理。使用边界事件时，事件由父进程处理。
+
+这两个差异可以帮助您确定边界事件还是嵌入式子流程更适合解决特定的流程modeling / implementation问题。
+
+#### 3.事务子流程（Transaction Sub Process）
+
+[[EXPERIMENTAL\]](https://www.activiti.org/userguide/#experimental)
+
+##### 描述
+
+事务子流程是一个嵌入式子流程，可用于将多个活动分组到一个事务中。事务是一个逻辑工作单元，它允许对一组单独的活动进行分组，以便它们共同成功或失败。
+
+事务的可能结果：一个事务可以有三种不同的结果：
+
+- 事务成功，如果它既没有被取消也没有被异常终止。如果事务子流程成功，则使用传出序列流保留。如果在流程后期抛出补偿事件，则可能会对成功的事务进行补偿。注意：就像“ordinary”嵌入式子流程一样，可以使用中间抛出补偿事件在成功完成后对事务进行补偿。
+- 如果执行到达取消结束事件，则事务取消。在这种情况下，所有执行都将终止并删除。然后将剩余的单个执行设置为取消边界事件，从而触发补偿。补偿完成后，使用取消边界事件的传出序列流离开事务子流程。
+- 事务因异常导致结束，如果抛出错误事件，则不会在事务子流程的范围内捕获。（这也适用于在事务子流程的边界上捕获错误的情况。）在这种情况下，不执行补偿。
+
+下图说明了三种不同的结果：
+
+![](http://rep.shaoteemo.com/bpmn.transaction.subprocess.example.1.png)
+
+与 ACID 事务的关系：不要将 bpmn 事务子流程与技术 (ACID) 事务混淆，这一点很重要。 bpmn 事务子流程不是一种确定技术事务范围的方法。为了理解 Activiti 中的事务管理，请阅读有关并发和事务的部分。bpmn 事务在以下方面与技术事务不同：
+
+- 虽然 ACID 事务通常是短暂的，但 bpmn 事务可能需要数小时、数天甚至数月才能完成。（考虑按事务分组的活动之一是用户任务的情况，通常人们的响应时间比应用程序长。或者，在另一种情况下，bpmn 事务可能会等待某些业务事件发生，例如特定订单已完成的事实。）与更新数据库中的记录或使用事务队列存储消息相比，此类操作通常需要更长的时间才能完成。
+- 因为不可能将技术事务的范围限定为业务活动的持续时间，所以 bpmn 事务通常跨越多个 ACID 事务。
+- 由于 bpmn 事务跨越多个 ACID 事务，我们失去了 ACID 属性。例如，考虑上面给出的例子。让我们假设“book hotel”和“charge credit card”操作是在单独的 ACID 事务中执行的。我们还假设“book hotel”活动是成功的。现在我们有一个中间不一致的状态，因为我们已经执行了一次酒店预订但还没有从信用卡中扣款。现在，在 ACID 事务中，我们还将按顺序执行不同的操作，因此也会有一个中间不一致的状态。这里的不同之处在于不一致的状态在事务范围之外是可见的。例如，如果使用外部预订服务进行预订，使用相同预订服务的其他方可能已经看到酒店已被预订。这意味着，在实现业务事务时，我们完全失去了隔离属性（当然：在处理 ACID 事务时，我们通常也会放宽隔离以允许更高级别的并发性，但在那里我们有细粒度的控制，并且中间不一致只出现在很短的时间内）。
+- 传统意义上的 bpmn 业务事务也不能回滚。由于它跨越多个 ACID 事务，其中一些 ACID 事务可能在 bpmn 事务被取消时已经提交。此时，它们无法再回滚。
+
+由于 bpmn 事务本质上是长时间运行的，因此需要以不同的方式处理缺乏隔离和回滚机制。在实践中，通常没有比以特定领域的方式处理这些问题更好的解决方案：
+
+- 使用补偿执行回滚。如果在事务范围内抛出取消事件，则所有成功执行并具有补偿处理程序的活动的影响都会得到补偿。
+- 缺乏隔离也经常使用领域特定的解决方案来解决。例如，在上面的例子中，在我们真正确定第一个客户可以支付之前，酒店房间可能看起来是给第二个客户预订的。由于从业务角度来看这可能是不可取的，因此预订服务可能会选择允许一定数量的超额预订。
+- 此外，由于事务可以在发生异常的情况下中止，因此预订服务必须处理预订了酒店房间但从未尝试付款的情况（因为交易已中止）。在这种情况下，预订服务可能会选择这样一种策略，即在最长时间内预订酒店房间，如果在此之前未收到付款，则预订将被取消。
+
+总结一下：虽然 ACID 事务为此类问题（回滚、隔离级别和启发式结果）提供了通用解决方案，但在实现业务事务时，我们需要针对这些问题找到特定于领域的解决方案。
+
+**当前限制：**
+
+- BPMN 规范要求流程引擎对底层事务协议发出的事件做出反应，例如，如果底层协议中发生取消事件，则取消事务。作为一个可嵌入的引擎，Activiti 目前不支持这个。 （有关这方面的一些后果，请参阅下面关于一致性的段落。）
+
+在 ACID 事务和乐观并发之上的一致性：bpmn 事务在某种意义上保证一致性，即所有活动都成功竞争，或者如果某些活动无法执行，则所有其他成功活动的影响都会得到补偿。因此，无论哪种方式，我们最终都会处于一致的状态。然而，重要的是要认识到，在 Activiti 中，bpmn 事务的一致性模型叠加在流程执行的一致性模型之上。Activiti 以事务的方式执行流程。使用乐观锁解决并发问题。在 Activiti 中，bpmn 错误、取消和补偿事件建立在相同的 acid 事务和乐观锁之上。在 Activiti 中，bpmn 错误、取消和补偿事件建立在相同的 acid 事务和乐观锁之上。例如，取消结束事件只有在实际到达时才能触发补偿。如果之前服务任务抛出了一些未声明的异常，则不会到达。或者，如果底层 ACID 事务中的某个其他参与者将事务设置为仅回滚状态，则无法提交补偿处理程序的效果。或者，当两个并发执行达到取消结束事件时，补偿可能会被触发两次并因乐观锁定异常而失败。所有这一切都是说，在 Activiti 中实现 bpmn 事务时，应用与实现“ordinary”流程和子流程相同的规则集。因此，为了有效地保证一致性，以一种确实考虑到乐观、事务执行模型的方式来实施流程是很重要的。
+
+##### 图形示例
+
+事务子流程可能被视为具有双重轮廓的嵌入式子流程。
+
+![](http://rep.shaoteemo.com/bpmn.transaction.subprocess.png)
+
+##### XML示例
+
+事务子流程使用 xml 使用事务标记表示：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="事务子流程演示">
+
+    <process id="transaction_subProcess" name="transaction_subProcess">
+        <transaction id="myTransaction" >
+            <!--...-->
+        </transaction>
+    </process>
+</definitions>
+```
+
+##### 案例
+
+以下是事务子流程的示例：
+
+![](http://rep.shaoteemo.com/bpmn.transaction.subprocess.example.2.png)
+
+##### 本节概念扩展
+
+1.悲观锁与乐观锁
+
+2.乐观并发与悲观并发
+
+3.事务四大特性(ACID)
+
+#### 4.活动调用 (Call Activity subprocess)
+
+##### 描述
+
+BPMN 2.0 将常规子流程（通常也称为嵌入式子流程）与看起来非常相似的调用活动区分开来。从概念的角度来看，当流程执行到达活动时，两者都会调用子流程。
+
+不同之处在于调用活动引用了流程定义外部的流程，而子流程则嵌入在原始流程定义中。调用活动的主要用例是拥有可从多个其他流程定义调用的可重用流程定义。
+
+当流程执行到达调用活动时，会创建一个新的执行，它是到达调用活动的执行的sub-execution。然后使用该sub-execution来执行子流程，可能会像在常规流程中一样创建并行子执行。super-execution会一直等到子流程完全结束，然后再继续原来的进程。
+
+##### 图形示例
+
+调用活动的可视化与子流程相同，但边框较粗（折叠和展开）。根据建模工具，也可以展开调用活动，但默认的可视化是折叠的子流程表示。
+
+![](http://rep.shaoteemo.com/bpmn.collapsed.call.activity.png)
+
+##### XML示例
+
+调用活动是一个常规活动，它需要一个*calledElement* ，该元素通过**key**引用流程定义。实际上，这意味着在*calledElement*中使用了流程的 id。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="">
+
+    <process id="call_activity" name="call_activity">
+        <!--定义活动调用-->
+        <callActivity id="callCheckCreditProcess" name="Check credit" calledElement="checkCreditProcess" />
+    </process>
+</definitions>
+```
+
+请注意，子流程的流程定义是在运行时解析的。这意味着如果需要，子流程可以独立于调用流程进行部署。
+
+##### 变量的转递
+
+您可以将流程变量传递给子流程，反之亦然。数据在启动时复制到子进程中，并在结束时复制回主进程。
+
+```xml
+<!--值传递-->
+<callActivity id="callSubProcess" calledElement="checkCreditProcess" >
+    <extensionElements>
+        <activiti:in source="someVariableInMainProcess" target="nameOfVariableInSubProcess" />
+        <activiti:out source="someVariableInSubProcess" target="nameOfVariableInMainProcess" />
+    </extensionElements>
+</callActivity>
+```
+
+我们使用 Activiti Extension 作为 BPMN 标准元素的快捷方式，称为 dataInputAssociation 和 dataOutputAssociation，它们仅在您以 BPMN 2.0 标准方式声明流程变量时才有效。
+
+这里也可以使用表达式：
+
+```xml
+<!--支持表达式-->
+<callActivity id="callSubProcess2" calledElement="checkCreditProcess" >
+    <extensionElements>
+        <activiti:in sourceExpression="${x+5}" target="y" />
+        <activiti:out source="${y+5}" target="z" />
+    </extensionElements>
+</callActivity>
+```
+
+所以最后 z = y+5 = x+5+5
+
+callActivity 元素还支持使用自定义 activiti 属性扩展在启动的子流程实例上设置业务键。 businessKey 属性可用于在子流程实例上设置自定义业务键值。
+
+```xml
+<!--自定义Business键-->
+<callActivity id="callSubProcess3" calledElement="checkCreditProcess" activiti:businessKey="${myVariable}">
+    ...
+</callActivity>
+```
+
+定义值为true 的inheritBusinessKey 属性会将子流程上的业务键值设置为调用流程中定义的业务键值。
+
+```xml
+<callActivity id="callSubProcess4" calledElement="checkCreditProcess" activiti:inheritBusinessKey="true">
+    ...
+</callActivity>
+```
+
+##### 例子
+
+以下流程图显示了订单的简单处理。由于客户信用的检查对于许多其他流程来说可能是通用的，因此检查信用步骤在这里被建模为活动调用。
+
+![](http://rep.shaoteemo.com/bpmn.call.activity.super.process.png)
+
+该过程如下所示：
+
+```xml
+<!--案例-->
+<process id="example">
+    <startEvent id="theStart" />
+    <sequenceFlow id="flow1" sourceRef="theStart" targetRef="receiveOrder" />
+    <manualTask id="receiveOrder" name="Receive Order" />
+    <sequenceFlow id="flow2" sourceRef="receiveOrder" targetRef="callCheckCreditProcess" />
+    <callActivity id="callCheckCreditProcess" name="Check credit" calledElement="checkCreditProcess" />
+    <sequenceFlow id="flow3" sourceRef="callCheckCreditProcess" targetRef="prepareAndShipTask" />
+    <userTask id="prepareAndShipTask" name="Prepare and Ship" />
+    <sequenceFlow id="flow4" sourceRef="prepareAndShipTask" targetRef="end" />
+    <endEvent id="end" />
+</process>
+```
+
+子流程如下所示：
+
+![](http://rep.shaoteemo.com/bpmn.call.activity.sub.process.png)
+
+子流程的流程定义没有什么特别之处。它也可以在不被另一个进程调用的情况下使用。
+
+### 事务和并发（Transactions and Concurrency）
+
+#### 1. Asynchronous Continuations
+
+Activiti 以事务性的方式执行流程，可以根据您的需求进行配置。让我们先看看 Activiti 如何正常界定事务。如果您触发 Activiti（即启动一个流程、完成一个任务、发出执行信号），Activiti 将在流程中前进，直到它在每个活动执行路径上达到等待状态。更具体地说，它通过流程图执行深度优先搜索，如果在每个执行分支上都达到等待状态，则返回。等待状态是“稍后”执行的任务，这意味着 Activiti 会持久化当前执行并等待再次触发。触发器可以来自外部源，例如，如果我们有一个用户任务或接收消息任务，或者来自 Activiti 本身，如果我们有一个计时器事件。如下图所示：
+
+![](http://rep.shaoteemo.com/activiti.async.example.no.async.png)
+
+我们看到一个 BPMN 流程的一部分，其中包含一个用户任务、一个服务任务和一个计时器事件。完成用户任务和验证地址是同一个工作单元的一部分，因此它应该自动成功或失败。这意味着如果服务任务抛出异常，我们希望回滚当前事务，以便执行回溯到用户任务并且用户任务仍然存在于数据库中。这也是 Activiti 的默认行为。在 (1) 应用程序或客户端线程完成任务。在同一个线程中 Activiti 现在正在执行服务并前进直到它达到等待状态，在这种情况下是计时器事件(2).然后它将控制权返回给调用者 (3) 可能提交事务（如果它是由 Activiti 启动的）。
+
+在某些情况下，这不是我们想要的。有时我们需要对流程中的事务边界进行自定义控制，以便能够确定逻辑工作单元的范围。这就是异步延续发挥作用的地方。考虑以下过程（片段）：
+
+![](http://rep.shaoteemo.com/activiti.async.example.async.png)
+
+这次我们正在完成用户任务，生成发票，然后将该发票发送给客户。这次发票的生成不是同一工作单元的一部分，因此如果生成发票失败，我们不想回滚用户任务的完成。所以我们想让 Activiti 做的是完成用户任务（1)，提交事务并将控制权返回给调用应用程序。然后我们想在后台线程中异步生成发票。这个后台线程是 Activiti 作业执行器（实际上是一个线程池），它会定期轮询数据库中的作业。所以在后台，当我们到达“生成发票”任务时，我们正在为 Activiti 创建一个作业“消息”，以便稍后继续该过程并将其持久化到数据库中。该作业然后由作业执行器拾取并执行。我们还向本地作业执行程序提供了一个新作业的提示，以提高性能。
+
+为了使用这个特性，我们可以使用 activiti:async="true" 扩展。例如，服务任务将如下所示：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Asynchronous Continuations演示">
+
+    <process id="asynchronous_continuations" name="asynchronous_continuations">
+        <!--开启异步-->
+        <serviceTask id="service1" name="Generate Invoice" activiti:class="my.custom.Delegate" activiti:async="true" />
+    </process>
+</definitions>
+```
+
+可以在以下 BPMN 任务类型上指定 activiti:async：task、serviceTask、scriptTask、businessRuleTask、sendTask、receiveTask、userTask、subProcess、callActivity
+
+在 userTask、receiveTask 或其他等待状态上，异步延续允许我们在单独的线程/事务中执行开始执行侦听器。
+
+#### 2.错误重试（Fail Retry）
+
+Activiti 在其默认配置中，会在作业执行过程中出现任何异常时重新运行作业 3 次。这也适用于异步任务作业。在某些情况下，需要更大的灵活性。有两个参数需要配置：
+
+- 重试次数
+
+- 重试之间的延迟 这些参数可以通过 activiti:failedJobRetryTimeCycle 元素进行配置。这是一个示例用法：
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <definitions
+          xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+          xmlns:activiti="http://activiti.org/bpmn"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                      https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+          xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+          xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+          xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+          targetNamespace="错误重试演示">
+  
+      <process id="fail_retry" name="fail_retry">
+          <!--重试次数、间隔-->
+          <serviceTask id="failingServiceTask" activiti:async="true" activiti:class="org.activiti.engine.test.jobexecutor.RetryFailingDelegate">
+              <extensionElements>
+                  <activiti:failedJobRetryTimeCycle>R5/PT7M</activiti:failedJobRetryTimeCycle>
+              </extensionElements>
+          </serviceTask>
+      </process>
+  </definitions>
+  ```
+
+时间周期表达式遵循 ISO 8601 标准，就像定时器事件表达式一样。上面的示例使作业执行程序重试作业 5 次，并在每次重试之前等待 7 分钟。
+
+#### 3.Exclusive Jobs
+
+从 Activiti 5.9 开始，JobExecutor 确保来自单个流程实例的作业永远不会并发执行。为什么是这样？
+
+##### 为什么要exclusive Jobs?
+
+考虑以下流程定义：
+
+![](http://rep.shaoteemo.com/bpmn.why.exclusive.jobs.png)
+
+我们有一个并行网关，后跟三个服务任务，它们都执行asynchronous continuation。结果，三个作业被添加到数据库中。一旦这样的作业出现在数据库中，它就可以由 JobExecutor 处理。JobExecutor 获取作业并将它们委托给实际处理作业的工作线程的线程池。这意味着使用asynchronous continuation，您可以将工作分配到该线程池（在集群场景中甚至可以跨集群中的多个线程池）。这通常是一件好事。然而它也有一个固有的问题：一致性。考虑服务任务之后的并行连接。当一个服务任务的执行完成时，我们到达并行连接，需要决定是否等待其他执行或我们是否可以继续前进。这意味着，对于到达并行连接的每个分支，我们需要决定是否可以继续，或者是否需要等待其他分支上的一个或多个其他执行。
+
+为什么这是个问题？由于服务任务是使用异步延续配置的，因此可能会同时获取相应的作业，并由 JobExecutor 委托给不同的工作线程。结果是执行服务的事务和 3 个单独的执行到达并行连接的事务可能重叠。如果他们这样做，每个单独的事务将不会“看到”另一个事务同时到达同一个并行连接，因此假设它必须等待其他事务。但是，如果每个事务都假定它必须等待其他事务，则在并行连接之后没有任何事务会继续该过程，并且流程实例将永远保持该状态。
+
+Activiti 如何解决这个问题？ Activiti 执行乐观锁。每当我们根据可能不是最新的数据做出决定时（因为另一个事务可能会在我们提交之前修改它，我们确保在两个事务中增加同一数据库行的版本）。这样，无论哪个事务先提交都会获胜，而其他事务因乐观锁定异常而失败。这解决了上面讨论的过程中的问题：如果多个执行同时到达并行连接，它们都假定必须等待，增加其父执行（流程实例）的版本，然后尝试提交。无论先执行哪个都可以提交，而其他执行将因乐观锁定异常而失败。由于执行是由作业触发的，Activiti 会在等待一定时间后重试执行相同的作业，并希望这次通过同步网关。
+
+这是一个很好的解决方案吗？正如我们所见，乐观锁允许 Activiti 防止不一致。它确保我们不会“停留在加入网关”，这意味着：要么所有执行都通过了网关，要么数据库中有作业确保我们重试通过它。然而，虽然从持久性和一致性的角度来看这是一个完美的解决方案，但这在更高级别上可能并不总是理想的行为：
+
+- Activiti 只会在固定的最大次数内重试相同的作业（默认配置中为 3）。之后，该作业仍将存在于数据库中，但不再主动重试。这意味着操作员需要手动触发作业。
+- 如果作业具有非事务性副作用，则失败的事务不会回滚这些副作用。例如，如果“预订音乐会门票”服务与 Activiti 不共享同一事务，则如果我们重试该作业，我们可能会预订多张门票。
+
+##### 什么是exclusive Jobs?
+
+一个exclusive jobs 不能与来自同一流程实例的另一个独占作业同时执行。考虑上面展示的流程：如果我们声明服务任务是独占的，JobExecutor 将确保相应的作业不是并发执行的。相反，它将确保每当它从某个流程实例获取独占作业时，它会从同一流程实例获取所有其他独占作业并将它们委托给同一个工作线程。这确保了作业的顺序执行。
+
+如何启用此功能？从 Activiti 5.9 开始，exclusive jobs是默认配置。因此，默认情况下所有异步延续和计时器事件都是独占的。此外，如果您希望作业是非独占的，您可以使用 activiti:exclusive="false" 将其配置为非独占。例如，以下 servicetask 将是异步但非排他的。
+
+```xml
+<serviceTask id="service" activiti:expression="${myService.performBooking(hotel, dates)}" activiti:async="true" activiti:exclusive="false" />
+```
+
+这是一个很好的解决方案吗？我们有一些人询问这是否是一个好的解决方案。他们担心这会阻止您并行“doing things”，从而导致性能问题。同样，必须考虑两件事：
+
+- 如果您是专家并且知道自己在做什么（并且已经理解了名为“Why exclusive Jobs？”的部分），则可以将其关闭。除此之外，对于大多数用户来说，如果异步延续和计时器之类的东西正常工作，它会更直观。
+- 这实际上不是性能问题。性能是重负载下的问题。重负载意味着作业执行器的所有工作线程一直都很忙。对于独占作业，Activiti 将简单地以不同方式分配负载。独占作业意味着来自单个流程实例的作业由同一线程按顺序执行。但请考虑：您有不止一个流程实例。来自其他流程实例的作业被委托给其他线程并并发执行。这意味着对于独占作业，Activiti 不会并发执行来自同一个流程实例的作业，但它仍然会并发执行多个实例。从整体吞吐量的角度来看，这在大多数情况下都是可取的，因为它通常会导致更快地完成单个实例。此外，执行同一流程实例的后续作业所需的数据将已经在执行集群节点的缓存中。如果作业没有此节点关联，则可能需要再次从数据库中提取该数据。
+
+### 流程启动权限（Process Initiation Authorization）
+
+默认情况下，每个人都可以启动已部署流程定义的新流程实例。流程启动授权功能允许定义用户和组，以便 Web 客户端可以选择性地限制用户启动新流程实例。请注意，Activiti 引擎不会以任何方式验证授权定义。此功能仅适用于开发人员在 Web 客户端中简化授权规则的实现。语法类似于用户任务的用户分配语法。可以使用 \<activiti:potentialStarter\> 标记将用户或组分配为进程的潜在发起者。下面是一个例子：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="流程启动权限演示">
+
+    <process id="process_initiation_authorization" name="process_initiation_authorization">
+        <extensionElements>
+            <activiti:potentialStarter>
+                <resourceAssignmentExpression>
+                    <formalExpression>group2, group(group3), user(user3)</formalExpression>
+                </resourceAssignmentExpression>
+            </activiti:potentialStarter>
+        </extensionElements>
+
+        <startEvent id="theStart"/>
+        <!--……-->
+    </process>
+</definitions>
+```
+
+在上面的 xml 摘录中，user(user3) 直接指的是用户 user3，而 group(group3) 指的是组 group3。
+
+没有指标将默认为组类型。也可以使用 <process> 标签的属性，即 \<activiti:candidateStarterUsers\> 和 \<activiti:candidateStarterGroups\>。下面是一个例子：
+
+```xml
+<process id="potentialStarter" activiti:candidateStarterUsers="user1, user2"
+         activiti:candidateStarterGroups="group1">
+...
+</process>
+```
+
+可以同时使用这两个属性。
+
+定义流程启动授权后，开发人员可以使用以下方法检索授权定义。此代码检索可由给定用户启动的流程定义列表：
+
+```java
+processDefinitions = repositoryService.createProcessDefinitionQuery().startableByUser("userxxx").list();
+```
+
+还可以检索被定义为特定流程定义的潜在启动者的所有身份链接
+
+```java
+identityLinks = repositoryService.getIdentityLinksForProcessDefinition("processDefinitionId");
+```
+
+以下示例显示了如何获取可以启动给定进程的用户列表：
+
+```java
+List<User> authorizedUsers =  identityService().createUserQuery().potentialStarter("processDefinitionId").list();
+```
+
+以完全相同的方式，可以检索配置为给定流程定义的潜在启动器的组列表：
+
+```java
+List<Group> authorizedGroups =  identityService().createGroupQuery().potentialStarter("processDefinitionId").list();
+```
+
+### 数据对象
+
+[[EXPERIMENTAL\]](https://www.activiti.org/userguide/#experimental)
+
+BPMN 提供了将数据对象定义为流程或子流程元素的一部分的可能性。根据 BPMN 规范，可以包含可能从 XSD 定义导入的复杂 XML 结构。作为在 Activiti 中支持数据对象的第一次开始，支持以下 XSD 类型：
+
+```xml
+<dataObject id="dObj1" name="StringTest" itemSubjectRef="xsd:string"/>
+<dataObject id="dObj2" name="BooleanTest" itemSubjectRef="xsd:boolean"/>
+<dataObject id="dObj3" name="DateTest" itemSubjectRef="xsd:datetime"/>
+<dataObject id="dObj4" name="DoubleTest" itemSubjectRef="xsd:double"/>
+<dataObject id="dObj5" name="IntegerTest" itemSubjectRef="xsd:int"/>
+<dataObject id="dObj6" name="LongTest" itemSubjectRef="xsd:long"/>
+```
+
+数据对象定义将使用名称属性值作为新变量的名称自动转换为流程变量。除了数据对象的定义之外，Activiti 还提供了一个扩展元素来为变量分配一个默认值。以下 BPMN 片段提供了一个示例：
+
+```xml
+<process id="dataObjectScope" name="Data Object Scope" isExecutable="true">
+    <dataObject id="dObj123" name="StringTest123" itemSubjectRef="xsd:string">
+        <extensionElements>
+            <activiti:value>Testing123</activiti:value>
+        </extensionElements>
+    </dataObject>
+</process>
+```
+
+## Forms
+
+Activiti 提供了一种方便灵活的方式来为您的业务流程的手动步骤添加表单。我们支持两种处理表单的策略：使用表单属性的内置表单渲染和外部表单渲染。
+
+### 表单属性
+
+与业务流程相关的所有信息要么包含在流程变量本身中，要么通过流程变量引用。Activiti 支持将复杂的 Java 对象存储为流程变量，如 Serializable 对象、JPA 实体或整个 XML 文档作为字符串。
+
+启动流程和完成用户任务是人们参与流程的地方。与人交流需要在某些 UI 技术中呈现表单。为了方便多种 UI 技术，流程定义可以包括将流程变量中复杂的 Java 类型对象转换为属性的 Map<String,String> 的逻辑。
+
+任何 UI 技术都可以在这些属性之上构建一个表单，使用公开属性信息的 Activiti API 方法。性可以提供有关过程变量的专用（且更有限）的视图。显示表单所需的属性在 FormData 返回值中可用，例如
+
+```java
+StartFormData FormService.getStartFormData(String processDefinitionId)
+```
+
+或者
+
+```java
+TaskFormdata FormService.getTaskFormData(String taskId)
+```
+
+默认情况下，内置表单引擎会查看属性以及流程变量。因此，如果任务表单属性与流程变量 1-1 匹配，则无需声明任务表单属性。例如，使用以下声明：
+
+```xml
+<startEvent id="start" />
+```
+
+当执行到达 startEvent 时，所有流程变量都可用，但
+
+```java
+formService.getStartFormData(String processDefinitionId).getFormProperties()
+```
+
+将是空的，因为没有定义特定的映射。
+
+在上述情况下，所有提交的属性都将存储为流程变量。这意味着只需在表单中添加一个新的输入字段，就可以存储一个新变量。
+
+属性源自流程变量，但它们不必存储为流程变量。例如，流程变量可以是类 Address 的 JPA 实体。 UI 技术使用的表单属性 StreetName 可以与表达式 #{address.street} 匹配。
+
+类似地，用户应该在表单中提交的属性可以存储为流程变量或流程变量之一中的嵌套属性，使用 UEL 值表达式，例如**#{address.street}** 。
+
+类似于提交的属性的默认行为，除非 formProperty 声明另有说明，否则它们将存储为流程变量。
+
+类型转换也可以作为表单属性和流程变量之间处理的一部分来应用。
+
+例如：
+
+```xml
+<userTask id="task">
+  <extensionElements>
+    <activiti:formProperty id="room" />
+    <activiti:formProperty id="duration" type="long"/>
+    <activiti:formProperty id="speaker" variable="SpeakerName" writable="false" />
+    <activiti:formProperty id="street" expression="#{address.street}" required="true" />
+  </extensionElements>
+</userTask>
+```
+
+- 表单属性**room**将作为字符串映射到流程变量**room**
+- 表单属性**duration**将作为 java.lang.Long 映射到流程变量**duration**
+- 表单属性**speaker**将映射到过程变量**SpeakerName**。它仅在 TaskFormData 对象中可用。如果提交了属性 Speaker，则会抛出 ActivitiException。类比，属性 readable="false" 可以从 FormData 中排除一个属性，但仍会在提交中进行处理。
+- 表单属性**street**将作为字符串映射到进程变量地址中的Java bean 属性**street**。如果未提供该属性，则 required="true" 将在提交期间抛出异常。
+
+还可以提供类型元数据作为从方法 StartFormData FormService.getStartFormData(String processDefinitionId) 和 TaskFormdata FormService.getTaskFormData(String taskId) 返回的 FormData 的一部分
+
+我们支持以下表单属性类型：
+
+- `string` (org.activiti.engine.impl.form.StringFormType）
+- `long` (org.activiti.engine.impl.form.LongFormType)
+- `enum` (org.activiti.engine.impl.form.EnumFormType)
+- `date` (org.activiti.engine.impl.form.DateFormType)
+- `boolean` (org.activiti.engine.impl.form.BooleanFormType)
+
+对于声明的每个表单属性，以下 FormProperty 信息将通过 List<FormProperty> formService.getStartFormData(String processDefinitionId).getFormProperties() 提供并列出 <FormProperty> formService.getTaskFormData (String taskId) .getFormProperties ()
+
+```java
+public interface FormProperty {
+  /** the key used to submit the property in {@link FormService#submitStartFormData(String, java.util.Map)}
+   * or {@link FormService#submitTaskFormData(String, java.util.Map)} */
+  String getId();
+  /** the display label */
+  String getName();
+  /** one of the types defined in this interface like e.g. {@link #TYPE_STRING} */
+  FormType getType();
+  /** optional value that should be used to display in this property */
+  String getValue();
+  /** is this property read to be displayed in the form and made accessible with the methods
+   * {@link FormService#getStartFormData(String)} and {@link FormService#getTaskFormData(String)}. */
+  boolean isReadable();
+  /** is this property expected when a user submits the form? */
+  boolean isWritable();
+  /** is this property a required input field */
+  boolean isRequired();
+}
+```
+
+例如：
+
+```xml
+<startEvent id="start">
+  <extensionElements>
+    <activiti:formProperty id="speaker"
+      name="Speaker"
+      variable="SpeakerName"
+      type="string" />
+
+    <activiti:formProperty id="start"
+      type="date"
+      datePattern="dd-MMM-yyyy" />
+
+    <activiti:formProperty id="direction" type="enum">
+      <activiti:value id="left" name="Go Left" />
+      <activiti:value id="right" name="Go Right" />
+      <activiti:value id="up" name="Go Up" />
+      <activiti:value id="down" name="Go Down" />
+    </activiti:formProperty>
+
+  </extensionElements>
+</startEvent>
+```
+
+所有这些信息都可以通过 API 访问。类型名称可以通过 formProperty.getType().getName() 获得。甚至日期模式也可以通过 formProperty.getType().getInformation("datePattern") 获得，枚举值也可以通过 formProperty.getType().getInformation("values") 访问
+
+Activiti explorer 支持表单属性，并将根据表单定义渲染表单。以下 XML 片段
+
+```xml
+<startEvent>
+  <extensionElements>
+    <activiti:formProperty id="numberOfDays" name="Number of days" value="${numberOfDays}" type="long" required="true"/>
+    <activiti:formProperty id="startDate" name="First day of holiday (dd-MM-yyy)" value="${startDate}" datePattern="dd-MM-yyyy hh:mm" type="date" required="true" />
+    <activiti:formProperty id="vacationMotivation" name="Motivation" value="${vacationMotivation}" type="string" />
+  </extensionElements>
+</userTask>
+```
+
+在 Activiti Explorer 中使用时将呈现为流程启动表单
+
+![](http://rep.shaoteemo.com/forms.explorer.png)
+
+### 外部表单渲染
+
+API 还允许您在 Activiti Engine 之外执行您自己的任务表单渲染。这些步骤解释了您可以用来自己呈现任务表单的钩子。
+
+本质上，呈现表单所需的所有数据都在以下两种服务方法之一中组装：StartFormData FormService.getStartFormData(String processDefinitionId) 和 TaskFormdata FormService.getTaskFormData(String taskId)。
+
+提交表单属性可以通过 ProcessInstance FormService.submitStartFormData(String processDefinitionId, Map<String,String> properties) 和 void FormService.submitTaskFormData(String taskId, Map<String,String> properties) 完成。
+
+要了解表单属性如何映射到流程变量，请参阅表单属性
+
+您可以将任何表单模板资源放置在您部署的业务档案中（以防您想将它们存储为流程版本）。它将作为部署中的资源可用，您可以使用以下方法进行检索：String ProcessDefinition.getDeploymentId() 和 InputStream RepositoryService.getResourceAsStream(String deploymentId, String resourceName);这可能是您的模板定义文件，您可以使用它在您自己的应用程序中render/show表单。
+
+您也可以将此功能用于访问任务表单之外的部署资源以用于任何其他目的。
+
+属性 `<userTask activiti:formKey="... " `由 API 通过 `String` `FormService.getStartFormData(String processDefinitionId).getFormKey()` 和 `String FormService.getTaskFormData(String taskId).getFormKey() `公开。您可以使用它在部署中存储模板的全名（例如 `org/activiti/example/form/my-custom-form.xml`），但这根本不是必需的。例如，您还可以在表单属性中存储一个通用键，并应用算法或转换来获取需要使用的实际模板。当您想为不同的 UI 技术呈现不同的表单时，这可能会很方便，例如一种用于普通屏幕大小的 Web 应用程序的表单，一种用于手机小屏幕的表单，甚至可能是 IM 表单或电子邮件表单的模板。
+
+## JPA
 

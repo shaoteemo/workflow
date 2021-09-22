@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="">
+
+    <process id="call_activity" name="call_activity">
+        <!--定义活动调用-->
+        <callActivity id="callCheckCreditProcess" name="Check credit" calledElement="checkCreditProcess" />
+
+        <!--值传递-->
+        <callActivity id="callSubProcess" calledElement="checkCreditProcess" >
+            <extensionElements>
+                <activiti:in source="someVariableInMainProcess" target="nameOfVariableInSubProcess" />
+                <activiti:out source="someVariableInSubProcess" target="nameOfVariableInMainProcess" />
+            </extensionElements>
+        </callActivity>
+        <!--支持表达式-->
+        <callActivity id="callSubProcess2" calledElement="checkCreditProcess" >
+            <extensionElements>
+                <activiti:in sourceExpression="${x+5}" target="y" />
+                <activiti:out source="${y+5}" target="z" />
+            </extensionElements>
+        </callActivity>
+        <!--自定义Business键-->
+        <callActivity id="callSubProcess3" calledElement="checkCreditProcess" activiti:businessKey="${myVariable}">
+            ...
+        </callActivity>
+        <callActivity id="callSubProcess4" calledElement="checkCreditProcess" activiti:inheritBusinessKey="true">
+            ...
+        </callActivity>
+    </process>
+
+    <!--案例-->
+    <process id="example">
+        <startEvent id="theStart" />
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="receiveOrder" />
+
+        <manualTask id="receiveOrder" name="Receive Order" />
+        <sequenceFlow id="flow2" sourceRef="receiveOrder" targetRef="callCheckCreditProcess" />
+
+        <callActivity id="callCheckCreditProcess" name="Check credit" calledElement="checkCreditProcess" />
+        <sequenceFlow id="flow3" sourceRef="callCheckCreditProcess" targetRef="prepareAndShipTask" />
+
+        <userTask id="prepareAndShipTask" name="Prepare and Ship" />
+        <sequenceFlow id="flow4" sourceRef="prepareAndShipTask" targetRef="end" />
+
+        <endEvent id="end" />
+    </process>
+</definitions>

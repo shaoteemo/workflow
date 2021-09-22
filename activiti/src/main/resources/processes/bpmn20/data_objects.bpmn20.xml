@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="数据对象演示">
+
+    <process id="data_objects" name="data_objects">
+        <dataObject id="dObj1" name="StringTest" itemSubjectRef="xsd:string"/>
+        <dataObject id="dObj2" name="BooleanTest" itemSubjectRef="xsd:boolean"/>
+        <dataObject id="dObj3" name="DateTest" itemSubjectRef="xsd:datetime"/>
+        <dataObject id="dObj4" name="DoubleTest" itemSubjectRef="xsd:double"/>
+        <dataObject id="dObj5" name="IntegerTest" itemSubjectRef="xsd:int"/>
+        <dataObject id="dObj6" name="LongTest" itemSubjectRef="xsd:long"/>
+    </process>
+
+    <process id="dataObjectScope" name="Data Object Scope" isExecutable="true">
+        <dataObject id="dObj123" name="StringTest123" itemSubjectRef="xsd:string">
+            <extensionElements>
+                <activiti:value>Testing123</activiti:value>
+            </extensionElements>
+        </dataObject>
+    </process>
+</definitions>
