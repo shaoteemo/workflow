@@ -268,7 +268,8 @@ ProcessEngines.getDefaultProcessEngine()获取默认的流程引擎
 //部分常见的异常类型
 |-- ActivitiException    
     |-- ActivitiWrongDbException//据库模式版本和引擎版本不匹配时抛出。    
-    |-- ActivitiOptimisticLockingException//同一数据条目的并发访问导致数据存储中发生乐观锁定     |-- ActivitiClassLoadingException    
+    |-- ActivitiOptimisticLockingException//同一数据条目的并发访问导致数据存储中发生乐观锁定 
+    |-- ActivitiClassLoadingException    
     |-- ActivitiObjectNotFoundException//请求或操作的对象不存在    
     |-- ActivitiIllegalArgumentException//非法参数    
     |-- ActivitiTaskAlreadyClaimedException//重复申明任务
