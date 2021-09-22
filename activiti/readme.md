@@ -4,7 +4,7 @@
 
 撰写人：ShaoTeemo
 
-本文档翻译原文档为[官方文档](https://www.activiti.org/userguide/)。其中包含了项目搭建过程的文件信息。文中出现的译注为本人(译者)观点。**注意：本文档并不会完全翻译所有章节，只会翻译核心内容。**
+本文档翻译原文档为[官方文档](https://www.activiti.org/userguide/)。其中包含了项目搭建过程的文件信息。文中出现的译注为本人(译者)观点。**注意：本文档并不会完全翻译所有章节，只会翻译核心内容，已确保认识Activiti。**
 
 ## 环境概述
 
@@ -141,32 +141,32 @@ org.activiti.spring.boot.AbstractProcessEngineAutoConfiguration用于集成Sprin
 
 ### ActivitiProperties配置介绍(常用配置)
 
-```
-checkProcessDefinitions（true）：是否检查流程定义文件(默认路径：classpath:/resources/processes中的流程文件)。该配置项如果没有对应的流程文件会抛出I/O异常.
-asyncExecutorActivate（true）：启用异步执行
-restApiEnabled：restApi支持
-deploymentName：部署名称
-mailServerHost（"localhost"）：邮件服务地址
-mailServerPort(1025)：邮件服务端口号
-mailServerUserName：邮件服务用户名
-mailServerPassword：邮件服务密码
-mailServerDefaultFrom：邮件服务默认发件人
-mailServerUseSsl：是否使用SSL
-mailServerUseTls：有否使用TLS
+```yaml
+checkProcessDefinitions（true）： #是否检查流程定义文件(默认路径：classpath:/resources/processes中的流程文件)。该配置项如果没有对应的流程文件会抛出I/O异常.
+asyncExecutorActivate（true）： #启用异步执行
+restApiEnabled： #restApi支持
+deploymentName： #部署名称
+mailServerHost（"localhost"）： #邮件服务地址
+mailServerPort(1025)： #邮件服务端口号
+mailServerUserName： #邮件服务用户名
+mailServerPassword： #邮件服务密码
+mailServerDefaultFrom： #邮件服务默认发件人
+mailServerUseSsl： #是否使用SSL
+mailServerUseTls： #有否使用TLS
 databaseSchemaUpdate：
-flase：activiti在启动时，会对比数据库表中保存的版本，如果没有表或者版本不匹配，将抛出异常。（生产环境常用）
-true：默认值。activiti会对数据库中所有表进行更新操作。如果表不存在，则自动创建。（开发时常用）
-create_drop：在activiti启动时创建表，在关闭时删除表（必须手动关闭	引擎，才能删除表）。（单元测试常用）
-drop-create：在activiti启动时删除原来的旧表，然后在创建新表（不需	要手动关闭引擎）。
+#flase：activiti在启动时，会对比数据库表中保存的版本，如果没有表或者版本不匹配，将抛出异常。（生产环境常用）
+#true：默认值。activiti会对数据库中所有表进行更新操作。如果表不存在，则自动创建。（开发时常用）
+#create_drop：在activiti启动时创建表，在关闭时删除表（必须手动关闭	引擎，才能删除表）。（单元测试常用）
+drop-create： #在activiti启动时删除原来的旧表，然后在创建新表（不需	要手动关闭引擎）。
 databaseSchema：
-isDbIdentityUsed（true）：是否启用数据库认证用户表
-isDbHistoryUsed（true）：是否启用数据库历史记录表
-historyLevel(audit)：历史记录级别none、activity、audit、full
-processDefinitionLocationPrefix（"classpath:/processes/"）：流程文件定义位置前缀
-processDefinitionLocationSuffixes("\*\*.bpmn20.xml", "\*\*.bpmn")：流程文件定义位置后缀
-restApiMapping（/api/*）：restAPI映射地址
-restApiServletName（"activitiRestApi"）：restAPI Servlet 名称
-jpaEnabled（true）：是否启用jps支持
+isDbIdentityUsed（true）： #是否启用数据库认证用户表
+isDbHistoryUsed（true）： #是否启用数据库历史记录表
+historyLevel(audit)： #历史记录级别none、activity、audit、full
+processDefinitionLocationPrefix（"classpath:/processes/"）： #流程文件定义位置前缀
+processDefinitionLocationSuffixes("\*\*.bpmn20.xml", "\*\*.bpmn")： #流程文件定义位置后缀
+restApiMapping（/api/*）： #restAPI映射地址
+restApiServletName（"activitiRestApi"）： #restAPI Servlet 名称
+jpaEnabled（true）： #是否启用jps支持
 customMybatisMappers：
 customMybatisXMLMappers:
 ```
@@ -264,8 +264,14 @@ ProcessEngines.getDefaultProcessEngine()获取默认的流程引擎
 
 来源于一个基本的org.activiti.engine.ActivitiException非检查时异常
 
-```java
-//部分常见的异常类型|-- ActivitiException    |-- ActivitiWrongDbException//据库模式版本和引擎版本不匹配时抛出。    |-- ActivitiOptimisticLockingException//同一数据条目的并发访问导致数据存储中发生乐观锁定    |-- ActivitiClassLoadingException    |-- ActivitiObjectNotFoundException//请求或操作的对象不存在    |-- ActivitiIllegalArgumentException//非法参数    |-- ActivitiTaskAlreadyClaimedException//重复申明任务
+```
+//部分常见的异常类型
+|-- ActivitiException    
+    |-- ActivitiWrongDbException//据库模式版本和引擎版本不匹配时抛出。    
+    |-- ActivitiOptimisticLockingException//同一数据条目的并发访问导致数据存储中发生乐观锁定     |-- ActivitiClassLoadingException    
+    |-- ActivitiObjectNotFoundException//请求或操作的对象不存在    
+    |-- ActivitiIllegalArgumentException//非法参数    
+    |-- ActivitiTaskAlreadyClaimedException//重复申明任务
 ```
 
 ### Activiti的使用（实践）
@@ -299,7 +305,34 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ### 	配置文件详解
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><!--    BPMN的根元素        该标签下可以有个process标签(推荐一个流程一个bpmn20文件)        targetNamespace：可以是任何内容，对流程定义进行分类很有用。        添加如下命明空间使用在线模式--><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="Examples">    <!--process元素        有两个主要元素：            1.id该属性时必须的，对应于定义流程的Key。通过这个ID可以通过startProcessInstanceByKey启动一个新的流程实例，                注意该方法只会通过部署的最新版本流程启动流程实例。该方式区别于startProcessInstanceById见API（ActivityService.startProcessById）            2.name可选属性。用于流程定义名称。引擎本身不使用此属性，因此它可用于在用户界面中显示更人性化的名称。[数据表：act_re_procdef]    -->    <process id="myProcessBpmn20" name="myProcessBpmn20" >    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    BPMN的根元素
+        该标签下可以有个process标签(推荐一个流程一个bpmn20文件)
+        targetNamespace：可以是任何内容，对流程定义进行分类很有用。
+
+        添加如下命明空间使用在线模式
+-->
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="Examples">
+    <!--process元素
+        有两个主要元素：
+            1.id该属性时必须的，对应于定义流程的Key。通过这个ID可以通过startProcessInstanceByKey启动一个新的流程实例，
+                注意该方法只会通过部署的最新版本流程启动流程实例。该方式区别于startProcessInstanceById见API（ActivityService.startProcessById）
+            2.name可选属性。用于流程定义名称。引擎本身不使用此属性，因此它可用于在用户界面中显示更人性化的名称。[数据表：act_re_procdef]
+    -->
+    <process id="myProcessBpmn20" name="myProcessBpmn20" >
+
+    </process>
+</definitions>
 ```
 
 ### 	官方入门案例
@@ -309,7 +342,83 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ```
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"             xmlns:activiti="http://activiti.org/bpmn"             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"             targetNamespace="http://www.activiti.org/processdef">    <process id="financialReport" name="Monthly financial report reminder process" isExecutable="true">        <startEvent id="theStart"/>        <sequenceFlow sourceRef="theStart" targetRef="writeReportTask" id="flow1"/>        <userTask id="writeReportTask" name="Write monthly financial report">            <documentation>                Write monthly financial report for publication to shareholders.            </documentation>            <!--定义当前节点操作组-->            <potentialOwner>                <resourceAssignmentExpression>                    <formalExpression>accountancy</formalExpression>                </resourceAssignmentExpression>            </potentialOwner>        </userTask>        <sequenceFlow sourceRef="writeReportTask" targetRef="verifyReportTask" id="flow2"/>        <userTask name="Verify monthly financial report" id="verifyReportTask">            <documentation>                Verify monthly financial report composed by the accountancy department.                This financial report is going to be sent to all the company shareholders.            </documentation>            <!--定义当前节点操作组-->            <potentialOwner>                <resourceAssignmentExpression>                    <formalExpression>management</formalExpression>                </resourceAssignmentExpression>            </potentialOwner>        </userTask>        <sequenceFlow sourceRef="verifyReportTask" targetRef="theEnd" id="flow3"/>        <endEvent id="theEnd"/>    </process>    <bpmndi:BPMNDiagram id="BPMNDiagram_financialReport">        <bpmndi:BPMNPlane bpmnElement="financialReport" id="BPMNPlane_financialReport">            <bpmndi:BPMNShape bpmnElement="theStart">                <omgdc:Bounds height="30.0" width="30.0" x="75.0" y="225.0"/>            </bpmndi:BPMNShape>            <bpmndi:BPMNShape bpmnElement="writeReportTask">                <omgdc:Bounds height="80.0" width="100.0" x="165.0" y="200.0"/>            </bpmndi:BPMNShape>            <bpmndi:BPMNShape bpmnElement="verifyReportTask">                <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="200.0"/>            </bpmndi:BPMNShape>            <bpmndi:BPMNShape bpmnElement="theEnd">                <omgdc:Bounds height="28.0" width="28.0" x="480.0" y="226.0"/>            </bpmndi:BPMNShape>            <bpmndi:BPMNEdge bpmnElement="flow1">                <omgdi:waypoint x="105.0" y="240.0"/>                <omgdi:waypoint x="165.0" y="240.0"/>            </bpmndi:BPMNEdge>            <bpmndi:BPMNEdge bpmnElement="flow2">                <omgdi:waypoint x="265.0" y="240.0"/>                <omgdi:waypoint x="330.0" y="240.0"/>            </bpmndi:BPMNEdge>            <bpmndi:BPMNEdge bpmnElement="flow3">                <omgdi:waypoint x="430.0" y="240.0"/>                <omgdi:waypoint x="480.0" y="240.0"/>            </bpmndi:BPMNEdge>        </bpmndi:BPMNPlane>    </bpmndi:BPMNDiagram></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:activiti="http://activiti.org/bpmn"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://www.activiti.org/processdef">
+    <process id="financialReport" name="Monthly financial report reminder process" isExecutable="true">
+
+        <startEvent id="theStart"/>
+
+        <sequenceFlow sourceRef="theStart" targetRef="writeReportTask" id="flow1"/>
+
+        <userTask id="writeReportTask" name="Write monthly financial report">
+            <documentation>
+                Write monthly financial report for publication to shareholders.
+            </documentation>
+            <!--定义当前节点操作组-->
+            <potentialOwner>
+                <resourceAssignmentExpression>
+                    <formalExpression>accountancy</formalExpression>
+                </resourceAssignmentExpression>
+            </potentialOwner>
+        </userTask>
+
+        <sequenceFlow sourceRef="writeReportTask" targetRef="verifyReportTask" id="flow2"/>
+
+        <userTask name="Verify monthly financial report" id="verifyReportTask">
+            <documentation>
+                Verify monthly financial report composed by the accountancy department.
+                This financial report is going to be sent to all the company shareholders.
+            </documentation>
+            <!--定义当前节点操作组-->
+            <potentialOwner>
+                <resourceAssignmentExpression>
+                    <formalExpression>management</formalExpression>
+                </resourceAssignmentExpression>
+            </potentialOwner>
+        </userTask>
+        
+        <sequenceFlow sourceRef="verifyReportTask" targetRef="theEnd" id="flow3"/>
+
+        <endEvent id="theEnd"/>
+
+    </process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_financialReport">
+        <bpmndi:BPMNPlane bpmnElement="financialReport" id="BPMNPlane_financialReport">
+            <bpmndi:BPMNShape bpmnElement="theStart">
+                <omgdc:Bounds height="30.0" width="30.0" x="75.0" y="225.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="writeReportTask">
+                <omgdc:Bounds height="80.0" width="100.0" x="165.0" y="200.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="verifyReportTask">
+                <omgdc:Bounds height="80.0" width="100.0" x="330.0" y="200.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape bpmnElement="theEnd">
+                <omgdc:Bounds height="28.0" width="28.0" x="480.0" y="226.0"/>
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge bpmnElement="flow1">
+                <omgdi:waypoint x="105.0" y="240.0"/>
+                <omgdi:waypoint x="165.0" y="240.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow2">
+                <omgdi:waypoint x="265.0" y="240.0"/>
+                <omgdi:waypoint x="330.0" y="240.0"/>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge bpmnElement="flow3">
+                <omgdi:waypoint x="430.0" y="240.0"/>
+                <omgdi:waypoint x="480.0" y="240.0"/>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</definitions>
 ```
 
 ```
@@ -329,31 +438,245 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 #### 1.定时器事件定义（TimerEventDefinition）
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="定时器事件定义演示">    <process id="timer_event" name="timerEvent">        <startEvent id="theStart">            <!--                申明一个定时器事件任务                    businessCalendarName：指向流程引擎配置中的业务日历。当省略业务日历时，将使用默认业务日历。            -->            <timerEventDefinition activiti:businessCalendarName="custom">                <documentation>                    这里就是一个开始事件的定时器事件的定义                    定时器事件是由定义的定时器触发的事件。                    开始时间、中间事件、边界事件都可以用。该事件的行为取决于使用的日历时间。                    每个计时器事件都有一个默认的业务日历，但也可以在计时器事件定义上定义业务日历。                </documentation>                <!--                    定时器定义必须仅包含以下元素之一                -->                <timeDate>                    2011-03-11T12:13:14                    <documentation>指定固定日期，何时触发触发器。（格式标准：ISO 8601）</documentation>                </timeDate>                <timeDuration>                    P10D                    <documentation>指定计时器在触发之前应该运行多长时间。如隔10天后触发（格式标准：ISO 8601）</documentation>                </timeDuration>                <!--                    endTime：为该标签的可选属性。当达到该时间后程序将停止创建其他任务。                    endTime也可以写在表达式中。如果两个都有被指定则系统默认使用属性的结束时间。                -->                <timeCycle activiti:endDate="2015-02-25T16:42:11+00:00">                    R3/PT10H 或者写成 R3/PT10H/${EndDate}                    <documentation>                        指定重复执行间隔，多用于定期启动进程或为过期的用户任务发送多个提醒等。                        时间周期可以有两种格式：                            1.根据ISO 8601标准格式如上所示：R3/PT10H。                            2.也可以是CRON表达式每5分钟触发一次，从整小时开始：0 0/5 * * * ?                    </documentation>                </timeCycle>            </timerEventDefinition>        </startEvent>        <!--            通用边界事件定义：            以下内容也是一个定时器任务        -->        <boundaryEvent attachedToRef="firstLineSupport" id="escalationTimer" cancelActivity="true">            <timerEventDefinition>                <timeDuration>${duration}</timeDuration>            </timerEventDefinition>        </boundaryEvent>    </process></definitions><!--    注意：计时器仅在启用作业或异步执行器时触发（即需要在 activiti.cfg.xml 中将 jobExecutorActivate 或 asyncExecutorActivate 设置为 true，    因为默认情况下禁用作业和异步执行器）。    ps：SpringBoot集成Activiti6 asyncExecutorActivate默认是true？-->
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器事件定义演示">
+
+    <process id="timer_event" name="timerEvent">
+        <startEvent id="theStart">
+            <!--
+                申明一个定时器事件任务
+                    businessCalendarName：指向流程引擎配置中的业务日历。当省略业务日历时，将使用默认业务日历。
+            -->
+            <timerEventDefinition activiti:businessCalendarName="custom">
+                <documentation>
+                    这里就是一个开始事件的定时器事件的定义
+
+                    定时器事件是由定义的定时器触发的事件。
+                    开始时间、中间事件、边界事件都可以用。该事件的行为取决于使用的日历时间。
+                    每个计时器事件都有一个默认的业务日历，但也可以在计时器事件定义上定义业务日历。
+                </documentation>
+                <!--
+                    定时器定义必须仅包含以下元素之一
+                -->
+                <timeDate>
+                    2011-03-11T12:13:14
+                    <documentation>指定固定日期，何时触发触发器。（格式标准：ISO 8601）</documentation>
+                </timeDate>
+
+                <timeDuration>
+                    P10D
+                    <documentation>指定计时器在触发之前应该运行多长时间。如隔10天后触发（格式标准：ISO 8601）</documentation>
+                </timeDuration>
+
+                <!--
+                    endTime：为该标签的可选属性。当达到该时间后程序将停止创建其他任务。
+                    endTime也可以写在表达式中。如果两个都有被指定则系统默认使用属性的结束时间。
+                -->
+                <timeCycle activiti:endDate="2015-02-25T16:42:11+00:00">
+                    R3/PT10H 或者写成 R3/PT10H/${EndDate}
+                    <documentation>
+                        指定重复执行间隔，多用于定期启动进程或为过期的用户任务发送多个提醒等。
+                        时间周期可以有两种格式：
+                            1.根据ISO 8601标准格式如上所示：R3/PT10H。
+                            2.也可以是CRON表达式每5分钟触发一次，从整小时开始：0 0/5 * * * ?
+                    </documentation>
+                </timeCycle>
+            </timerEventDefinition>
+        </startEvent>
+        <!--
+            通用边界事件定义：
+            以下内容也是一个定时器任务
+        -->
+        <boundaryEvent attachedToRef="firstLineSupport" id="escalationTimer" cancelActivity="true">
+            <timerEventDefinition>
+                <timeDuration>${duration}</timeDuration>
+            </timerEventDefinition>
+        </boundaryEvent>
+    </process>
+</definitions>
+<!--
+    注意：计时器仅在启用作业或异步执行器时触发（即需要在 activiti.cfg.xml 中将 jobExecutorActivate 或 asyncExecutorActivate 设置为 true，
+    因为默认情况下禁用作业和异步执行器）。
+    ps：SpringBoot集成Activiti6 asyncExecutorActivate默认是true？
+-->
 ```
 
 #### 2.错误事件定义（ErrorEventDefinition）
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="错误事件定义演示">    <!--        提示：BPMN20中的错误与Java中的异常完全不同，两者也没有任何关联。            BPMN错误事件是一种对业务异常建模的方法。而Java一样有其独有的异常处理方式。    -->    <process id="error_event" name="errorEvent">        <endEvent>            <errorEventDefinition errorRef="myError"/>        </endEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="错误事件定义演示">
+
+    <!--
+        提示：BPMN20中的错误与Java中的异常完全不同，两者也没有任何关联。
+            BPMN错误事件是一种对业务异常建模的方法。而Java一样有其独有的异常处理方式。
+    -->
+    <process id="error_event" name="errorEvent">
+        <endEvent>
+            <errorEventDefinition errorRef="myError"/>
+        </endEvent>
+    </process>
+</definitions>
+
 ```
 
 #### 3.信号事件定义（SignalEventDefinition）
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="信号事件定义演示"><!--documentUrl:https://www.activiti.org/userguide/#bpmnSignalEventDefinitionQuery-->    <!--        声明信号         activiti:scope:配置信号作用范围默认为“global”。（非BPMN2.0标准！）    -->    <signal id="alertSignal" name="alert" activiti:scope="processInstance">        <documentation>            信号事件是引用命名的信号事件。        </documentation>    </signal>    <process id="signal_event" name="signalEvent">        <intermediateThrowEvent id="throwSignalEvent" name="Alert">            <documentation>抛出事件信号定义</documentation>            <!--                信号事件定义。                signalRef：值为声明的信号元素。            -->            <signalEventDefinition signalRef="alertSignal" />        </intermediateThrowEvent>        <!--.....-->        <intermediateCatchEvent id="catchSignalEvent" name="On Alert">            <documentation>捕获事件信号定义</documentation>            <signalEventDefinition signalRef="alertSignal"/>        </intermediateCatchEvent>        <!--.....-->    </process></definitions><!--    本Xml涉及少量的Java代码：SignalEventImpl.java    信号事件作用域范围        默认情况下，信号广播范围为整个引擎。因此如果在某个流程实例中抛出一个信号事件，        其他具有不同流程定义的流程实例可以对这个事件触发做出反应。        然而在某些情况下我们只希望对同一流程实例中的信号事件做出反应。            eg.一个用例是流程实例中使用同步机制，如过两个或多个活动互斥。--><!--    一些本节中出现的标记文字描述        MessageStartEvent：消息开始事件，一个圆⚪中间一个信封✉图标-->
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号事件定义演示">
+<!--documentUrl:https://www.activiti.org/userguide/#bpmnSignalEventDefinitionQuery-->
+    <!--
+        声明信号
+         activiti:scope:配置信号作用范围默认为“global”。（非BPMN2.0标准！）
+    -->
+    <signal id="alertSignal" name="alert" activiti:scope="processInstance">
+        <documentation>
+            信号事件是引用命名的信号事件。
+        </documentation>
+    </signal>
+
+    <process id="signal_event" name="signalEvent">
+        <intermediateThrowEvent id="throwSignalEvent" name="Alert">
+            <documentation>抛出事件信号定义</documentation>
+            <!--
+                信号事件定义。
+                signalRef：值为声明的信号元素。
+            -->
+            <signalEventDefinition signalRef="alertSignal" />
+        </intermediateThrowEvent>
+
+        <!--.....-->
+
+        <intermediateCatchEvent id="catchSignalEvent" name="On Alert">
+            <documentation>捕获事件信号定义</documentation>
+            <signalEventDefinition signalRef="alertSignal"/>
+        </intermediateCatchEvent>
+
+        <!--.....-->
+
+    </process>
+</definitions>
+<!--
+    本Xml涉及少量的Java代码：SignalEventImpl.java
+
+    信号事件作用域范围
+        默认情况下，信号广播范围为整个引擎。因此如果在某个流程实例中抛出一个信号事件，
+        其他具有不同流程定义的流程实例可以对这个事件触发做出反应。
+
+        然而在某些情况下我们只希望对同一流程实例中的信号事件做出反应。
+            eg.一个用例是流程实例中使用同步机制，如过两个或多个活动互斥。
+-->
+
+<!--
+    一些本节中出现的标记文字描述
+        MessageStartEvent：消息开始事件，一个圆⚪中间一个信封✉图标
+
+-->
 ```
 
 #### 4.消息事件定义（MeaasgeEventDefinition）
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="消息事件定义演示">    <!--DocumentUrl:https://www.activiti.org/userguide/#bpmnMessageEventDefinition-->    <!--        消息事件是引用命名消息的事件。消息具有名称和有效载荷。        与信号不同，消息事件总是针对单个接收者。    -->    <!--消息声明-->    <message id="newInvoice" name="newInvoiceMessage"/>    <message id="payment" name="paymentMessage"/>    <process id="message_event" name="messageEvent">        <startEvent id="messageStart">            <documentation>这是一个消息开始事件</documentation>            <!--消息定义-->            <messageEventDefinition messageRef="newInvoice"/>        </startEvent>        <!--...-->        <intermediateCatchEvent id="paymentEvt">            <documentation>这是一个捕获消息事件</documentation>            <messageEventDefinition messageRef="payment"/>        </intermediateCatchEvent>        <!--...-->    </process></definitions><!--    关联的Java: com.shaoteemo.bpmn.MessageEventImpl-->
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息事件定义演示">
+
+    <!--DocumentUrl:https://www.activiti.org/userguide/#bpmnMessageEventDefinition-->
+
+    <!--
+        消息事件是引用命名消息的事件。消息具有名称和有效载荷。
+        与信号不同，消息事件总是针对单个接收者。
+    -->
+
+    <!--消息声明-->
+    <message id="newInvoice" name="newInvoiceMessage"/>
+    <message id="payment" name="paymentMessage"/>
+
+    <process id="message_event" name="messageEvent">
+        <startEvent id="messageStart">
+            <documentation>这是一个消息开始事件</documentation>
+            <!--消息定义-->
+            <messageEventDefinition messageRef="newInvoice"/>
+        </startEvent>
+        <!--...-->
+        <intermediateCatchEvent id="paymentEvt">
+            <documentation>这是一个捕获消息事件</documentation>
+            <messageEventDefinition messageRef="payment"/>
+        </intermediateCatchEvent>
+        <!--...-->
+    </process>
+</definitions>
+<!--
+    关联的Java: com.shaoteemo.bpmn.MessageEventImpl
+-->
 ```
 
 #### 5.开始事件（StartEvents）
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="开始事件演示"><!--    开始时间指示流程开始的位置        启动事件的类型（进程在消息到达时启动，在特定的时间间隔等），        定义流程的启动方式在事件的可视化表示中显示为一个小图标（timer_event.xml\message_event.xml等）。    事件总是为捕获事件：概念上，事件是（在任何时候）等待某个触发器发生。-->    <process id="start_event" name="startEvent">        <!--            initiator:标识在进程启动时将存储经过身份验证的用户ID的变量名称。        -->        <startEvent id="request" activiti:initiator="initiator"/>    </process></definitions><!--关联的Java:com.shaoteemo.bpmn.StartEventImpl-->
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="开始事件演示">
+<!--
+    开始时间指示流程开始的位置
+        启动事件的类型（进程在消息到达时启动，在特定的时间间隔等），
+        定义流程的启动方式在事件的可视化表示中显示为一个小图标（timer_event.xml\message_event.xml等）。
+
+    事件总是为捕获事件：概念上，事件是（在任何时候）等待某个触发器发生。
+
+-->
+    <process id="start_event" name="startEvent">
+        <!--
+            initiator:标识在进程启动时将存储经过身份验证的用户ID的变量名称。
+        -->
+        <startEvent id="request" activiti:initiator="initiator"/>
+    </process>
+</definitions>
+<!--关联的Java:com.shaoteemo.bpmn.StartEventImpl-->
 ```
 
 #### 6.空开始事件（None Start Event）常用的一个事件
@@ -361,7 +684,37 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![空开始事件](http://rep.shaoteemo.com/activiti/bpmn.none.start.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="空开始事件演示">    <!--        空开始事件：未指定启动流程实例的触发器事件。            这意味着这样的流程需要手动启动。通过RuntimeService中的API启动。            NOTE：子流程总是有一个空开始事件    -->    <process id="none_start_event" name="noneStartEvent">        <!--空开始事件的XML表示是正常的开始事件声明，没有任何子元素（其他开始事件类型都有一个声明类型的子元素）。-->        <startEvent id="start" name="my start event"/>        <!--            对空开始事件的自定义扩展            formKey：对用户在启动新流程实例时必须填写的表单模板的引用。        -->        <startEvent id="startFormKey" activiti:formKey="org/activiti/examples/taskforms/request.form"/>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="空开始事件演示">
+
+    <!--
+        空开始事件：未指定启动流程实例的触发器事件。
+            这意味着这样的流程需要手动启动。通过RuntimeService中的API启动。
+
+            NOTE：子流程总是有一个空开始事件
+
+    -->
+    <process id="none_start_event" name="noneStartEvent">
+        <!--空开始事件的XML表示是正常的开始事件声明，没有任何子元素（其他开始事件类型都有一个声明类型的子元素）。-->
+        <startEvent id="start" name="my start event"/>
+
+        <!--
+            对空开始事件的自定义扩展
+            formKey：对用户在启动新流程实例时必须填写的表单模板的引用。
+        -->
+        <startEvent id="startFormKey" activiti:formKey="org/activiti/examples/taskforms/request.form"/>
+    </process>
+</definitions>
+
 ```
 
 #### 7.定时器启动事件（Timer Start Event)
@@ -369,7 +722,45 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![定时器图片样式](http://rep.shaoteemo.com/activiti/bpmn.clock.start.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="定时器启动事件演示">    <!--        计时器启动事件用于在给定时间创建流程实例。既可以用于一次启动流程，也可以在某一事件间隔启动多次流程。        NOTE：            1.子流程不能有计时器启动事件。            2.流程部署会立即安排启动计时器事件。不需要调用RuntimeService中的启动API就会自动根据条件启动。        定时器启动事件的 XML 表示是普通的启动事件声明，带有定时器定义子元素.    -->    <process id="timer_start_event" name="timerStartEvent">        <!--示例1：流程将从2011年3月11日12:13开始，以5分钟为间隔启动4次-->        <startEvent id="theStartExample1">            <timerEventDefinition>                <timeCycle>R4/2011-03-11T12:13/PT5M</timeCycle>            </timerEventDefinition>        </startEvent>        <!--示例：进程将在选定日期开始一次-->        <startEvent id="theStartExample2">            <timerEventDefinition>                <timeDate>2088-09-01T00:00:00</timeDate>            </timerEventDefinition>        </startEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器启动事件演示">
+
+    <!--
+        计时器启动事件用于在给定时间创建流程实例。既可以用于一次启动流程，也可以在某一事件间隔启动多次流程。
+
+        NOTE：
+            1.子流程不能有计时器启动事件。
+            2.流程部署会立即安排启动计时器事件。不需要调用RuntimeService中的启动API就会自动根据条件启动。
+
+        定时器启动事件的 XML 表示是普通的启动事件声明，带有定时器定义子元素.
+
+    -->
+    <process id="timer_start_event" name="timerStartEvent">
+        <!--示例1：流程将从2011年3月11日12:13开始，以5分钟为间隔启动4次-->
+        <startEvent id="theStartExample1">
+            <timerEventDefinition>
+                <timeCycle>R4/2011-03-11T12:13/PT5M</timeCycle>
+            </timerEventDefinition>
+        </startEvent>
+
+        <!--示例：进程将在选定日期开始一次-->
+        <startEvent id="theStartExample2">
+            <timerEventDefinition>
+                <timeDate>2088-09-01T00:00:00</timeDate>
+            </timerEventDefinition>
+        </startEvent>
+    </process>
+</definitions>
+
 ```
 
 #### 8.消息开始事件（Message Start Event）
@@ -377,7 +768,63 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![](http://rep.shaoteemo.com/activiti/bpmn.start.message.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="消息启动事件演示">    <!--        消息启动事件：可用于使用命名消息启动流程实例。有效地让我们使用消息名称从一组备选启动事件中选择符合条件的事件启动。        使用一个或多个消息启动事件部署流程定义时，应注意以下事项：            1.消息启动事件的名称在给定的流程定义中必须是唯一的。流程定义不能有多个同名的消息启动事件,否则              Activiti 在部署流程定义时抛出异常，如果两个及以上的消息启动事件引用具有相同消息名称的消息，              则两个或多个消息启动事件引用相同的消息。            2.消息启动事件的名称在所有部署的流程定义中必须是唯一的，否则，Activiti 在部署流程定义时抛出异常，              使得一个及以上的消息启动事件引用由不同流程定义部署的消息启动事件同名的消息。            3.流程版本控制：在部署流程定义的新版本时，将取消先前版本的消息订阅。对于新版本中不存在的消息事件也是如此。        启动对应的流程实例API方式见：Java: com.shaoteemo.bpmn.MessageEventImpl            *JavaAPI中的传入属性messageName：是在 messageEventDefinition 的 messageRef 属性引用的消息元素的 name 属性中给出的名称。            启动流程实例时，注意事项：                1.消息启动事件仅在主流程上受支持。嵌入式子流程不支持消息启动事件。                2.如果流程定义有多个消息启动事件，runtimeService.startProcessInstanceByMessage(…)允许选择适当的启动事件。                3.如果流程定义有多个消息启动事件和一个无启动事件，runtimeService.startProcessInstanceByKey(…)和                  runtimeService.startProcessInstanceById(…)使用无启动事件启动流程实例。                4.如果流程定义有多个消息启动事件并且没有无启动事件，runtimeService.startProcessInstanceByKey(…)和                  runtimeService.startProcessInstanceById(… )会抛出异常。                5.如果流程定义具有单个消息启动事件，runtimeService.startProcessInstanceByKey(…)和                  runtimeService.startProcessInstanceById(… )会使用消息启动事件启动一个新的流程实例。                6.如果流程是以活动调用方式启动的，则仅在以下情况下才支持消息启动事件                    6.1.除了消息开始事件之外，流程还有一个无开始事件                    6.2.该流程只有一个消息启动事件，没有其他启动事件。    -->    <message id="newInvoice" name="newInvoiceMessage" />    <process id="message_start_event" name="messageStartEvent">        <startEvent id="messageStart" >            <messageEventDefinition messageRef="newInvoice"/>        </startEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息启动事件演示">
+
+    <!--
+        消息启动事件：可用于使用命名消息启动流程实例。有效地让我们使用消息名称从一组备选启动事件中选择符合条件的事件启动。
+
+        使用一个或多个消息启动事件部署流程定义时，应注意以下事项：
+            1.消息启动事件的名称在给定的流程定义中必须是唯一的。流程定义不能有多个同名的消息启动事件,否则
+              Activiti 在部署流程定义时抛出异常，如果两个及以上的消息启动事件引用具有相同消息名称的消息，
+              则两个或多个消息启动事件引用相同的消息。
+
+            2.消息启动事件的名称在所有部署的流程定义中必须是唯一的，否则，Activiti 在部署流程定义时抛出异常，
+              使得一个及以上的消息启动事件引用由不同流程定义部署的消息启动事件同名的消息。
+
+            3.流程版本控制：在部署流程定义的新版本时，将取消先前版本的消息订阅。对于新版本中不存在的消息事件也是如此。
+
+        启动对应的流程实例API方式见：Java: com.shaoteemo.bpmn.MessageEventImpl
+
+            *JavaAPI中的传入属性messageName：是在 messageEventDefinition 的 messageRef 属性引用的消息元素的 name 属性中给出的名称。
+
+            启动流程实例时，注意事项：
+                1.消息启动事件仅在主流程上受支持。嵌入式子流程不支持消息启动事件。
+
+                2.如果流程定义有多个消息启动事件，runtimeService.startProcessInstanceByMessage(…)允许选择适当的启动事件。
+
+                3.如果流程定义有多个消息启动事件和一个无启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(…)使用无启动事件启动流程实例。
+
+                4.如果流程定义有多个消息启动事件并且没有无启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(… )会抛出异常。
+
+                5.如果流程定义具有单个消息启动事件，runtimeService.startProcessInstanceByKey(…)和
+                  runtimeService.startProcessInstanceById(… )会使用消息启动事件启动一个新的流程实例。
+
+                6.如果流程是以活动调用方式启动的，则仅在以下情况下才支持消息启动事件
+                    6.1.除了消息开始事件之外，流程还有一个无开始事件
+                    6.2.该流程只有一个消息启动事件，没有其他启动事件。
+
+    -->
+
+    <message id="newInvoice" name="newInvoiceMessage" />
+
+    <process id="message_start_event" name="messageStartEvent">
+        <startEvent id="messageStart" >
+            <messageEventDefinition messageRef="newInvoice"/>
+        </startEvent>
+    </process>
+</definitions>
 ```
 
 #### 9.信号开始事件（Signal Start Event）
@@ -385,7 +832,42 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![](http://rep.shaoteemo.com/activiti/bpmn.start.signal.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="信号启动事件演示">    <!--        信号启动事件：可用于使用命名信号启动流程实例。        信号启动事件启动方式：            1.中间信号抛出事件            2.通过 API（runtimeService.signalEventReceivedXXX 方法）从流程实例中触发信号。                （Java Class:com.shaoteemo.bpmn.SignalEventImpl）            注意，在以上两种情况下，还可以在流程实例的同步和异步启动之间进行选择。    -->    <signal id="signal" name="theSignal"/>    <process id="signal_start_event" name="signalStartEvent">        <startEvent id="start">            <signalEventDefinition id="theSignalEventDefinition" signalRef="signal"  />        </startEvent>        <sequenceFlow sourceRef="start" targetRef="task"/>        <userTask id="task" name="Task in process A" />        <sequenceFlow id="flow2" sourceRef="task" targetRef="end" />        <endEvent id="end" />    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号启动事件演示">
+
+    <!--
+        信号启动事件：可用于使用命名信号启动流程实例。
+
+        信号启动事件启动方式：
+            1.中间信号抛出事件
+            2.通过 API（runtimeService.signalEventReceivedXXX 方法）从流程实例中触发信号。
+                （Java Class:com.shaoteemo.bpmn.SignalEventImpl）
+
+            注意，在以上两种情况下，还可以在流程实例的同步和异步启动之间进行选择。
+
+    -->
+
+    <signal id="signal" name="theSignal"/>
+
+    <process id="signal_start_event" name="signalStartEvent">
+        <startEvent id="start">
+            <signalEventDefinition id="theSignalEventDefinition" signalRef="signal"  />
+        </startEvent>
+        <sequenceFlow sourceRef="start" targetRef="task"/>
+        <userTask id="task" name="Task in process A" />
+        <sequenceFlow id="flow2" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
+    </process>
+</definitions>
 ```
 
 #### 10.错误开始事件（Error Start Event）
@@ -393,7 +875,32 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![](http://rep.shaoteemo.com/activiti/bpmn.start.error.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="错误开始事件演示">    <!--        错误启动事件可用于触发事件子流程。        错误启动事件不能用于启动流程实例。        错误启动事件总是中断。    -->    <process id="error_start_event" name="errorStartEvent">        <startEvent id="messageStart" >            <errorEventDefinition errorRef="someError" />        </startEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="错误开始事件演示">
+
+    <!--
+        错误启动事件可用于触发事件子流程。
+        错误启动事件不能用于启动流程实例。
+
+        错误启动事件总是中断。
+    -->
+
+    <process id="error_start_event" name="errorStartEvent">
+        <startEvent id="messageStart" >
+            <errorEventDefinition errorRef="someError" />
+        </startEvent>
+    </process>
+</definitions>
+
 ```
 
 #### 11.结束事件（End Events）
@@ -405,7 +912,27 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![](http://rep.shaoteemo.com/activiti/bpmn.none.end.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="空结束事件演示">    <!--        空结束事件意味着到达事件时抛出的结果是未指定的。        因此，除了结束当前的执行路径外，引擎不会做任何额外的事情。    -->    <process id="none_end_event" name="noneEndEvent">        <endEvent id="end" name="my end event"/>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="空结束事件演示">
+
+    <!--
+        空结束事件意味着到达事件时抛出的结果是未指定的。
+        因此，除了结束当前的执行路径外，引擎不会做任何额外的事情。
+    -->
+
+    <process id="none_end_event" name="noneEndEvent">
+        <endEvent id="end" name="my end event"/>
+    </process>
+</definitions>
 ```
 
 #### 13.错误结束事件（Error End Event）
@@ -413,7 +940,55 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![](http://rep.shaoteemo.com/activiti/bpmn.error.end.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="错误结束事件演示">    <!--        当流程执行到达错误结束事件时，当前执行路径结束并抛出错误。        此错误可以被匹配的中间边界错误事件捕获。如果没有找到匹配的边界错误事件，则会抛出异常。    -->    <error id="myError" errorCode="123"/>    <process id="error_end_event" name="errorEndEvent">        <!--            错误结束事件表示为结束事件，带有一个 errorEventDefinition 子元素。            errorRef 属性可以引用在进程外定义的错误元素：        -->        <endEvent id="end">            <errorEventDefinition errorRef="myError"/>        </endEvent>    </process>    <!--        errorCode 用于查找匹配的捕获边界错误事件。        如果 errorRef 与任何定义的错误都不匹配，则 errorRef 会匹配 errorCode。    -->    <error id="myError2" errorCode="error123"/>    <process id="myProcess">        <endEvent id="myErrorEndEvent">            <errorEventDefinition errorRef="myError2"/>        </endEvent>        <!--这两个效果相同-->        <endEvent id="myErrorEndEvent2">            <errorEventDefinition errorRef="error123" />        </endEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="错误结束事件演示">
+
+    <!--
+        当流程执行到达错误结束事件时，当前执行路径结束并抛出错误。
+
+        此错误可以被匹配的中间边界错误事件捕获。如果没有找到匹配的边界错误事件，则会抛出异常。
+    -->
+
+
+    <error id="myError" errorCode="123"/>
+
+    <process id="error_end_event" name="errorEndEvent">
+        <!--
+            错误结束事件表示为结束事件，带有一个 errorEventDefinition 子元素。
+
+            errorRef 属性可以引用在进程外定义的错误元素：
+        -->
+        <endEvent id="end">
+            <errorEventDefinition errorRef="myError"/>
+        </endEvent>
+    </process>
+
+    <!--
+        errorCode 用于查找匹配的捕获边界错误事件。
+
+        如果 errorRef 与任何定义的错误都不匹配，则 errorRef 会匹配 errorCode。
+    -->
+    <error id="myError2" errorCode="error123"/>
+
+    <process id="myProcess">
+        <endEvent id="myErrorEndEvent">
+            <errorEventDefinition errorRef="myError2"/>
+        </endEvent>
+        <!--这两个效果相同-->
+        <endEvent id="myErrorEndEvent2">
+            <errorEventDefinition errorRef="error123" />
+        </endEvent>
+    </process>
+</definitions>
 ```
 
 #### 14.终止结束事件（Terminate End Event）
@@ -421,7 +996,44 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![](http://rep.shaoteemo.com/activiti/bpmn.terminate.end.event.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="终止结束事件演示">    <!--        当达到终止结束事件时，当前流程实例或子流程将被终止。        从概念上讲，当执行到达终止结束事件时，将确定并结束第一个范围（流程或子流程）。        这个规则一般适用：            例如当有一个多实例调用活动或嵌入的子流程时，只有那个实例会被结束，其他实例和流程实例不受影响。        注意:            在 BPMN 2.0 中，子流程可以是嵌入式子流程、调用活动、事件子流程或事务子流程。    -->    <process id="terminate_end_event" name="terminateEndEvent">        <endEvent>            <!--                可选属性 terminateAll 默认值为false：                    当为true时，无论终止结束事件在流程定义中的位置如何，                    也无论是否在子流程（甚至嵌套）中，主流程实例都将被终止。            -->            <terminateEventDefinition activiti:terminateAll="true"/>        </endEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="终止结束事件演示">
+
+
+    <!--
+
+        当达到终止结束事件时，当前流程实例或子流程将被终止。
+        从概念上讲，当执行到达终止结束事件时，将确定并结束第一个范围（流程或子流程）。
+
+        这个规则一般适用：
+            例如当有一个多实例调用活动或嵌入的子流程时，只有那个实例会被结束，其他实例和流程实例不受影响。
+
+        注意:
+            在 BPMN 2.0 中，子流程可以是嵌入式子流程、调用活动、事件子流程或事务子流程。
+
+    -->
+
+    <process id="terminate_end_event" name="terminateEndEvent">
+
+        <endEvent>
+            <!--
+                可选属性 terminateAll 默认值为false：
+                    当为true时，无论终止结束事件在流程定义中的位置如何，
+                    也无论是否在子流程（甚至嵌套）中，主流程实例都将被终止。
+            -->
+            <terminateEventDefinition activiti:terminateAll="true"/>
+        </endEvent>
+    </process>
+</definitions>
 ```
 
 #### 15.取消结束事件（Cancel End Event）
@@ -429,7 +1041,29 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ![](http://rep.shaoteemo.com/activiti/%E5%8F%96%E6%B6%88%E7%BB%93%E6%9D%9F%E4%BA%8B%E4%BB%B6.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="取消结束事件演示">    <!--        取消结束事件只能与 bpmn 事务子流程结合使用。        当到达取消结束事件时，将抛出取消事件，该事件必须由取消边界事件捕获。然后取消边界事件取消事务并触发补偿。    -->    <process id="cancel_event_end" name="cancelEventEnd">        <endEvent>            <cancelEventDefinition/>        </endEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="取消结束事件演示">
+
+    <!--
+        取消结束事件只能与 bpmn 事务子流程结合使用。
+
+        当到达取消结束事件时，将抛出取消事件，该事件必须由取消边界事件捕获。然后取消边界事件取消事务并触发补偿。
+    -->
+    <process id="cancel_event_end" name="cancelEventEnd">
+        <endEvent>
+            <cancelEventDefinition/>
+        </endEvent>
+    </process>
+</definitions>
 ```
 
 ### Boundary Events
@@ -437,7 +1071,36 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 #### 1.边界事件（Boundary Events）
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="边界事件演示">    <!--        边界事件捕获附加到活动的事件（边界事件永远不会抛出）。这意味着当活动正在运行时，事件正在侦听某种类型的触发器。        当事件被捕获时，活动被中断并遵循从事件出去的序列流。        边界事件定义：            1.唯一标识符（流程范围内）            2.对通过attachedToRef 属性将事件附加到的活动的引用。注意，边界事件与它们所依附的活动在同一级别上定义（即，活动中不包含边界事件）。    -->    <process id="boundary_event" name="boundaryEvent">        <!--所有边界事件的定义方式-->        <boundaryEvent attachedToRef="theActivity" id="myBoundaryEvent">            <XXXEventDefinition/>        </boundaryEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="边界事件演示">
+
+
+    <!--
+        边界事件捕获附加到活动的事件（边界事件永远不会抛出）。这意味着当活动正在运行时，事件正在侦听某种类型的触发器。
+        当事件被捕获时，活动被中断并遵循从事件出去的序列流。
+
+        边界事件定义：
+            1.唯一标识符（流程范围内）
+            2.对通过attachedToRef 属性将事件附加到的活动的引用。注意，边界事件与它们所依附的活动在同一级别上定义（即，活动中不包含边界事件）。
+
+    -->
+
+    <process id="boundary_event" name="boundaryEvent">
+        <!--所有边界事件的定义方式-->
+        <boundaryEvent attachedToRef="theActivity" id="myBoundaryEvent">
+            <XXXEventDefinition/>
+        </boundaryEvent>
+    </process>
+</definitions>
 ```
 
 #### 2.定时器边界事件（Timer Boundary Event）
@@ -455,7 +1118,27 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ##### XML表示
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="定时器边界事件演示">    <process id="timer_boundary_event" name="timerBoundaryEvent">        <boundaryEvent attachedToRef="firstLineSupport" cancelActivity="true" id="escalationTimer">            <timerEventDefinition>                <!--如不知写法的请查看 定时器事件定义-->                <timeDuration>PT4H</timeDuration>            </timerEventDefinition>        </boundaryEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器边界事件演示">
+
+    <process id="timer_boundary_event" name="timerBoundaryEvent">
+        <boundaryEvent attachedToRef="firstLineSupport" cancelActivity="true" id="escalationTimer">
+            <timerEventDefinition>
+                <!--如不知写法的请查看 定时器事件定义-->
+                <timeDuration>PT4H</timeDuration>
+            </timerEventDefinition>
+        </boundaryEvent>
+    </process>
+</definitions>
 ```
 
 在图形表示中，圆的线是点状的，如您在下面的示例中所见:
@@ -500,13 +1183,18 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 典型的边界事件：
 
 ```xml
-<boundaryEvent attachedToRef="mySubProcess" id="catchError">      <errorEventDefinition errorRef="myError"/></boundaryEvent>
+<boundaryEvent attachedToRef="mySubProcess" id="catchError">
+    <errorEventDefinition errorRef="myError"/>
+</boundaryEvent>
 ```
 
 与错误结束事件一样，errorRef 引用在流程元素之外定义的错误：
 
 ```xml
-<error id="myError" errorCode="123" />...<process id="myProcess">...
+<error id="myError" errorCode="123" />
+	...
+<process id="myProcess">
+     ...
 ```
 
 errorCode属性用于匹配捕获的错误：
@@ -543,7 +1231,24 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="信号边界事件演示">    <process id="signal_boundary_event" name="signalBoundaryEvent">        <boundaryEvent id="boundary" attachedToRef="task" cancelActivity="true">            <signalEventDefinition signalRef="alertSignal"/>        </boundaryEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号边界事件演示">
+
+    <process id="signal_boundary_event" name="signalBoundaryEvent">
+        <boundaryEvent id="boundary" attachedToRef="task" cancelActivity="true">
+            <signalEventDefinition signalRef="alertSignal"/>
+        </boundaryEvent>
+    </process>
+</definitions>
 ```
 
 #### 5.消息边界事件（Message Boundary Event）
@@ -561,7 +1266,24 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="消息边界事件">    <process id="message_boundary_event" name="messageBoundaryEvent">        <boundaryEvent id="boundary" attachedToRef="task" cancelActivity="true">            <messageEventDefinition messageRef="newCustomerMessage"/>        </boundaryEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息边界事件">
+
+    <process id="message_boundary_event" name="messageBoundaryEvent">
+        <boundaryEvent id="boundary" attachedToRef="task" cancelActivity="true">
+            <messageEventDefinition messageRef="newCustomerMessage"/>
+        </boundaryEvent>
+    </process>
+</definitions>
 ```
 
 #### 6.取消边界事件（Cancel Boundary Event）
@@ -585,7 +1307,24 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="取消边界事件演示">    <process id="cancel_boundary_event" name="cancelBoundaryEvent">        <boundaryEvent id="boundary" attachedToRef="transaction" >            <cancelEventDefinition />        </boundaryEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="取消边界事件演示">
+
+    <process id="cancel_boundary_event" name="cancelBoundaryEvent">
+        <boundaryEvent id="boundary" attachedToRef="transaction" >
+            <cancelEventDefinition />
+        </boundaryEvent>
+    </process>
+</definitions>
 ```
 
 由于取消边界事件总是中断流程，因此不需要cancelActivity属性。
@@ -616,7 +1355,28 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="补偿边界事件演示">    <process id="compensation_boundary_event" name="compensationBoundaryEvent">        <boundaryEvent id="compensateBookHotelEvt" attachedToRef="bookHotel" >            <compensateEventDefinition />        </boundaryEvent>        <association associationDirection="One" id="a1"  sourceRef="compensateBookHotelEvt" targetRef="undoBookHotel" />        <serviceTask id="undoBookHotel" isForCompensation="true" activiti:class="..." />    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="补偿边界事件演示">
+
+    <process id="compensation_boundary_event" name="compensationBoundaryEvent">
+        <boundaryEvent id="compensateBookHotelEvt" attachedToRef="bookHotel" >
+            <compensateEventDefinition />
+        </boundaryEvent>
+
+        <association associationDirection="One" id="a1"  sourceRef="compensateBookHotelEvt" targetRef="undoBookHotel" />
+
+        <serviceTask id="undoBookHotel" isForCompensation="true" activiti:class="..." />
+    </process>
+</definitions>
 ```
 
 由于在活动成功完成后才激活补偿边界事件，因此不支持**cancelActivity**属性。
@@ -628,7 +1388,24 @@ errorCode属性用于匹配捕获的错误：
 所有中间捕获事件都以相同的方式定义
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="中间捕获事件演示">    <process id="intermediate_catching_events" name="intermediateCatchingEvents">        <intermediateCatchEvent id="myIntermediateCatchEvent" >            <XXXEventDefinition/>        </intermediateCatchEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="中间捕获事件演示">
+
+    <process id="intermediate_catching_events" name="intermediateCatchingEvents">
+        <intermediateCatchEvent id="myIntermediateCatchEvent" >
+            <XXXEventDefinition/>
+        </intermediateCatchEvent>
+    </process>
+</definitions>
 ```
 
 中间捕获事件定义为
@@ -653,7 +1430,26 @@ errorCode属性用于匹配捕获的错误：
 定时器中间事件被定义为中间捕获事件。在这种情况下，特定类型子元素是 timerEventDefinition 元素。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="定时器中间捕获事件演示">    <process id="timer_intermediate_catching_event" name="timerIntermediateCatchingEvent">        <intermediateCatchEvent id="timer">            <timerEventDefinition>                <timeDuration>PT5M</timeDuration>            </timerEventDefinition>        </intermediateCatchEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="定时器中间捕获事件演示">
+
+    <process id="timer_intermediate_catching_event" name="timerIntermediateCatchingEvent">
+        <intermediateCatchEvent id="timer">
+            <timerEventDefinition>
+                <timeDuration>PT5M</timeDuration>
+            </timerEventDefinition>
+        </intermediateCatchEvent>
+    </process>
+</definitions>
 ```
 
 更多定时器相关请查看定时器事件定义。
@@ -675,7 +1471,25 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="信号中间捕获事件演示">    <process id="signal_intermediate_catching_event" name="signalIntermediateCatchingEvent">        <intermediateCatchEvent id="signal">            <!--指向信号的ID-->            <signalEventDefinition signalRef="newCustomerSignal" />        </intermediateCatchEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号中间捕获事件演示">
+
+    <process id="signal_intermediate_catching_event" name="signalIntermediateCatchingEvent">
+        <intermediateCatchEvent id="signal">
+            <!--指向信号的ID-->
+            <signalEventDefinition signalRef="newCustomerSignal" />
+        </intermediateCatchEvent>
+    </process>
+</definitions>
 ```
 
 更多信号相关请查看信号事件定义。
@@ -695,7 +1509,24 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="消息中间捕获事件演示">    <process id="message_intermediate_catching_event" name="messageIntermediateCatchingEvent">        <intermediateCatchEvent id="message">            <messageEventDefinition messageRef="newCustomerMessage" />        </intermediateCatchEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="消息中间捕获事件演示">
+
+    <process id="message_intermediate_catching_event" name="messageIntermediateCatchingEvent">
+        <intermediateCatchEvent id="message">
+            <messageEventDefinition messageRef="newCustomerMessage" />
+        </intermediateCatchEvent>
+    </process>
+</definitions>
 ```
 
 更多消息相关请查看消息事件定义。
@@ -705,7 +1536,24 @@ errorCode属性用于匹配捕获的错误：
 所有中间抛出事件都以相同的方式定义：
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="中间抛出事件演示">    <process id="intermediate_throwing_event" name="intermediateThrowingEvent">        <intermediateThrowEvent id="myIntermediateThrowEvent" >            <XXXEventDefinition/>        </intermediateThrowEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="中间抛出事件演示">
+
+    <process id="intermediate_throwing_event" name="intermediateThrowingEvent">
+        <intermediateThrowEvent id="myIntermediateThrowEvent" >
+            <XXXEventDefinition/>
+        </intermediateThrowEvent>
+    </process>
+</definitions>
 ```
 
 中间抛出事件定义为
@@ -724,7 +1572,26 @@ errorCode属性用于匹配捕获的错误：
 这可以是监控某些 KPI 的一个很好的钩子，基本上是通过添加一个执行侦听器。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="空中间抛出事件演示">    <process id="intermediate_throwing_none_event" name="intermediateThrowingNoneEvent">        <intermediateThrowEvent id="noneEvent">            <extensionElements>                <activiti:executionListener class="org.activiti.engine.test.bpmn.event.IntermediateNoneEventTest$MyExecutionListener" event="start" />            </extensionElements>        </intermediateThrowEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="空中间抛出事件演示">
+
+    <process id="intermediate_throwing_none_event" name="intermediateThrowingNoneEvent">
+        <intermediateThrowEvent id="noneEvent">
+            <extensionElements>
+                <activiti:executionListener class="org.activiti.engine.test.bpmn.event.IntermediateNoneEventTest$MyExecutionListener" event="start" />
+            </extensionElements>
+        </intermediateThrowEvent>
+    </process>
+</definitions>
 ```
 
 在那里您可以添加一些自己的代码，以便向您的 BAM 工具或 DWH 发送一些事件。引擎本身在那个事件中不做任何事情，它只是通过。
@@ -749,7 +1616,29 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="信号中间抛出事件演示">    <process id="signal_intermediate_throwing_event" name="signalIntermediateThrowingEvent">        <intermediateThrowEvent id="signal">            <signalEventDefinition signalRef="newCustomerSignal" />        </intermediateThrowEvent>        <!--异步写法-->        <intermediateThrowEvent id="signal2">            <signalEventDefinition signalRef="newCustomerSignal" activiti:async="true" />        </intermediateThrowEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="信号中间抛出事件演示">
+
+    <process id="signal_intermediate_throwing_event" name="signalIntermediateThrowingEvent">
+        <intermediateThrowEvent id="signal">
+            <signalEventDefinition signalRef="newCustomerSignal" />
+        </intermediateThrowEvent>
+
+        <!--异步写法-->
+        <intermediateThrowEvent id="signal2">
+            <signalEventDefinition signalRef="newCustomerSignal" activiti:async="true" />
+        </intermediateThrowEvent>
+    </process>
+</definitions>
 ```
 
 更多信号相关请查看信号事件定义。
@@ -797,7 +1686,31 @@ errorCode属性用于匹配捕获的错误：
 ##### XML示例
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="补偿中间抛出事件演示">    <process id="compensation_intermediate_throwing_event" name="compensationIntermediateThrowingEvent">        <!--基本定义-->        <intermediateThrowEvent id="throwCompensation">            <compensateEventDefinition />        </intermediateThrowEvent>        <!--            activityRef：触发特定范围/活动的补偿        -->        <intermediateThrowEvent id="throwCompensation2">            <compensateEventDefinition activityRef="bookHotel" />        </intermediateThrowEvent>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="补偿中间抛出事件演示">
+
+    <process id="compensation_intermediate_throwing_event" name="compensationIntermediateThrowingEvent">
+        <!--基本定义-->
+        <intermediateThrowEvent id="throwCompensation">
+            <compensateEventDefinition />
+        </intermediateThrowEvent>
+        <!--
+            activityRef：触发特定范围/活动的补偿
+        -->
+        <intermediateThrowEvent id="throwCompensation2">
+            <compensateEventDefinition activityRef="bookHotel" />
+        </intermediateThrowEvent>
+    </process>
+</definitions>
 ```
 
 ### Sequence Flow
@@ -819,7 +1732,22 @@ errorCode属性用于匹配捕获的错误：
 序列流需要有一个流程元素唯一的 id，以及对现有源和目标元素的引用。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="序列流演示">    <process id="sequence_flow" name="sequenceFlow">        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="theTask" />    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="序列流演示">
+
+    <process id="sequence_flow" name="sequenceFlow">
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="theTask" />
+    </process>
+</definitions>
 ```
 
 #### 2.条件序列流（Conditional Sequence Flow）
@@ -841,7 +1769,11 @@ errorCode属性用于匹配捕获的错误：
 条件序列流在 XML 中表示为常规序列流，其中包含一个 conditionExpression 子元素。请注意，目前仅支持 tFormalExpressions，省略 xsi:type="" 定义将简单地默认为仅支持的表达式类型。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="表达式序列流演示">    <process id="conditional_sequence_flow" name="conditionalSequenceFlow">        <sequenceFlow id="flow" sourceRef="theStart" targetRef="theTask">            <conditionExpression xsi:type="tFormalExpression">                <![CDATA[${order.price > 100 && order.price < 250}]]>            </conditionExpression>        </sequenceFlow>    </process></definitions>
+<sequenceFlow id="flow" sourceRef="theStart" targetRef="theTask">
+    <conditionExpression xsi:type="tFormalExpression">
+        <![CDATA[${order.price > 100 && order.price < 250}]]>
+    </conditionExpression>
+</sequenceFlow>
 ```
 
 当前条件表达式只能与 UEL 一起使用，有关这些的详细信息可以在表达式部分找到。使用的表达式应解析为布尔值，否则在评估条件时会抛出异常。
@@ -883,7 +1815,30 @@ Activiti 发行版包含以下使用值和方法表达式的示例流程（请�
 某个活动的默认序列流由该活动的默认属性定义。例如，以下 XML 片段显示了一个具有默认序列流*flow 2*. 的独占网关。只有当conditionA 和conditionB 都评估为false 时，才会被选为网关的传出序列流。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="默认序列流演示">    <process id="default_sequence_flow" name="defaultSequenceFlow">        <!--default：默认序列流ID-->        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" default="flow2" />        <sequenceFlow id="flow1" sourceRef="exclusiveGw" targetRef="task1">            <conditionExpression xsi:type="tFormalExpression">${}</conditionExpression>        </sequenceFlow>        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="task2"/>        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="task3">            <conditionExpression xsi:type="tFormalExpression">${conditionB}</conditionExpression>        </sequenceFlow>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="默认序列流演示">
+
+    <process id="default_sequence_flow" name="defaultSequenceFlow">
+        <!--default：默认序列流ID-->
+        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" default="flow2" />
+        <sequenceFlow id="flow1" sourceRef="exclusiveGw" targetRef="task1">
+            <conditionExpression xsi:type="tFormalExpression">${conditionA}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="task2"/>
+        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="task3">
+            <conditionExpression xsi:type="tFormalExpression">${conditionB}</conditionExpression>
+        </sequenceFlow>
+    </process>
+</definitions>
 ```
 
 ### Gateways
@@ -915,7 +1870,34 @@ Activiti 发行版包含以下使用值和方法表达式的示例流程（请�
 ![](http://rep.shaoteemo.com/activiti/bpmn.exclusive.gateway.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="专属网关演示">    <process id="exclusive_gateway" name="exclusiveGateway">        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" />        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="theTask1">            <conditionExpression xsi:type="tFormalExpression">${input == 1}</conditionExpression>        </sequenceFlow>        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="theTask2">            <conditionExpression xsi:type="tFormalExpression">${input == 2}</conditionExpression>        </sequenceFlow>        <sequenceFlow id="flow4" sourceRef="exclusiveGw" targetRef="theTask3">            <conditionExpression xsi:type="tFormalExpression">${input == 3}</conditionExpression>        </sequenceFlow>    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="专属网关演示">
+
+    <process id="exclusive_gateway" name="exclusiveGateway">
+        <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway" />
+
+        <sequenceFlow id="flow2" sourceRef="exclusiveGw" targetRef="theTask1">
+            <conditionExpression xsi:type="tFormalExpression">${input == 1}</conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="flow3" sourceRef="exclusiveGw" targetRef="theTask2">
+            <conditionExpression xsi:type="tFormalExpression">${input == 2}</conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="flow4" sourceRef="exclusiveGw" targetRef="theTask3">
+            <conditionExpression xsi:type="tFormalExpression">${input == 3}</conditionExpression>
+        </sequenceFlow>
+    </process>
+</definitions>
 ```
 
 #### 2.并行网关（Parallel Gateway）
@@ -944,7 +1926,7 @@ Activiti 发行版包含以下使用值和方法表达式的示例流程（请�
 定义一个并行网关需要一行 XML：
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="并行网关演示">    <process id="parallel_gateway" name="parallelGateway">        <parallelGateway id="myParallelGateway" />    </process></definitions>
+<parallelGateway id="myParallelGateway" />
 ```
 
 实际行为（fork、join 或两者）由连接到并行网关的序列流定义。
@@ -952,7 +1934,42 @@ Activiti 发行版包含以下使用值和方法表达式的示例流程（请�
 例如，上面的模型归结为以下 XML：
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="并行网关演示">    <process id="parallel_gateway" name="parallelGateway">        <!--文档中的案例-->        <startEvent id="theStart" />        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="fork" />        <parallelGateway id="fork" />        <sequenceFlow sourceRef="fork" targetRef="receivePayment" />        <sequenceFlow sourceRef="fork" targetRef="shipOrder" />        <userTask id="receivePayment" name="Receive Payment" />        <sequenceFlow sourceRef="receivePayment" targetRef="join" />        <userTask id="shipOrder" name="Ship Order" />        <sequenceFlow sourceRef="shipOrder" targetRef="join" />        <parallelGateway id="join" />        <sequenceFlow sourceRef="join" targetRef="archiveOrder" />        <userTask id="archiveOrder" name="Archive Order" />        <sequenceFlow sourceRef="archiveOrder" targetRef="theEnd" />        <endEvent id="theEnd" />    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="并行网关演示">
+
+    <process id="parallel_gateway" name="parallelGateway">
+        <!--文档中的案例-->
+        <startEvent id="theStart" />
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="fork" />
+
+        <parallelGateway id="fork" />
+        <sequenceFlow sourceRef="fork" targetRef="receivePayment" />
+        <sequenceFlow sourceRef="fork" targetRef="shipOrder" />
+
+        <userTask id="receivePayment" name="Receive Payment" />
+        <sequenceFlow sourceRef="receivePayment" targetRef="join" />
+
+        <userTask id="shipOrder" name="Ship Order" />
+        <sequenceFlow sourceRef="shipOrder" targetRef="join" />
+
+        <parallelGateway id="join" />
+        <sequenceFlow sourceRef="join" targetRef="archiveOrder" />
+
+        <userTask id="archiveOrder" name="Archive Order" />
+        <sequenceFlow sourceRef="archiveOrder" targetRef="theEnd" />
+
+        <endEvent id="theEnd" />
+    </process>
+</definitions>
 ```
 
 上面的例子中，进程启动后，会创建两个任务：
@@ -991,7 +2008,8 @@ ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");TaskQu
 定义一个包容性网关需要一行 XML：
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="包含网关演示">    <process id="inclusive_gateway" name="inclusiveGateway">        <!--定义包含网关-->        <inclusiveGateway id="myInclusiveGateway" />    </process></definitions>
+<!--定义包含网关-->
+<inclusiveGateway id="myInclusiveGateway" />
 ```
 
 实际行为（fork、join 或两者）由连接到包含网关的序列流定义。
@@ -999,7 +2017,46 @@ ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");TaskQu
 例如，上面的模型归结为以下 XML：
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="包含网关演示">    <process id="inclusive_gateway" name="inclusiveGateway">        <startEvent id="theStart" />        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="fork" />        <inclusiveGateway id="fork" />        <sequenceFlow sourceRef="fork" targetRef="receivePayment" >            <conditionExpression xsi:type="tFormalExpression">${paymentReceived == false}</conditionExpression>        </sequenceFlow>        <sequenceFlow sourceRef="fork" targetRef="shipOrder" >            <conditionExpression xsi:type="tFormalExpression">${shipOrder == true}</conditionExpression>        </sequenceFlow>        <userTask id="receivePayment" name="Receive Payment" />        <sequenceFlow sourceRef="receivePayment" targetRef="join" />        <userTask id="shipOrder" name="Ship Order" />        <sequenceFlow sourceRef="shipOrder" targetRef="join" />        <inclusiveGateway id="join" />        <sequenceFlow sourceRef="join" targetRef="archiveOrder" />        <userTask id="archiveOrder" name="Archive Order" />        <sequenceFlow sourceRef="archiveOrder" targetRef="theEnd" />        <endEvent id="theEnd" />    </process></definitions>
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL
+                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"
+        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+        targetNamespace="包含网关演示">
+
+    <process id="inclusive_gateway" name="inclusiveGateway">
+        <!--文档中的案例-->
+        <startEvent id="theStart" />
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="fork" />
+
+        <inclusiveGateway id="fork" />
+        <sequenceFlow sourceRef="fork" targetRef="receivePayment" >
+            <conditionExpression xsi:type="tFormalExpression">${paymentReceived == false}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow sourceRef="fork" targetRef="shipOrder" >
+            <conditionExpression xsi:type="tFormalExpression">${shipOrder == true}</conditionExpression>
+        </sequenceFlow>
+
+        <userTask id="receivePayment" name="Receive Payment" />
+        <sequenceFlow sourceRef="receivePayment" targetRef="join" />
+
+        <userTask id="shipOrder" name="Ship Order" />
+        <sequenceFlow sourceRef="shipOrder" targetRef="join" />
+
+        <inclusiveGateway id="join" />
+        <sequenceFlow sourceRef="join" targetRef="archiveOrder" />
+
+        <userTask id="archiveOrder" name="Archive Order" />
+        <sequenceFlow sourceRef="archiveOrder" targetRef="theEnd" />
+
+        <endEvent id="theEnd" />
+    </process>
+</definitions>
 ```
 
 在上面的例子中，流程启动后，如果流程变量paymentReceived == false和shipOrder == true，则会创建两个任务。如果这些流程变量中只有一个等于 true，则只会创建一项任务。如果没有条件评估为true并抛出异常。这可以**通过指定默认的传出序列流来防止**。在以下示例中，将创建一项任务，即船舶订单任务：
@@ -1035,7 +2092,10 @@ HashMap<String, Object> variableMap = new HashMap<String, Object>();          va
 用于定义基于事件的网关的 XML 元素是 eventBasedGateway。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="事件网关演示">    <process id="event-based_gateway" name="event-basedGateway">        <!--事件网关-->        <eventBasedGateway id="eventBasedGateway"/>    </process></definitions>
+<process id="event-based_gateway" name="event-basedGateway">
+    <!--事件网关-->
+    <eventBasedGateway id="eventBasedGateway"/>
+</process>
 ```
 
 ##### 例子
@@ -1045,7 +2105,30 @@ HashMap<String, Object> variableMap = new HashMap<String, Object>();          va
 ![](http://rep.shaoteemo.com/bpmn.event.based.gateway.example.png)
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="事件网关演示">    <!--文档案例-->    <signal id="alertSignal" name="alert" />    <process id="catchSignal">        <startEvent id="start" />        <sequenceFlow sourceRef="start" targetRef="gw1" />        <eventBasedGateway id="gw1" />        <sequenceFlow sourceRef="gw1" targetRef="signalEvent" />        <sequenceFlow sourceRef="gw1" targetRef="timerEvent" />        <intermediateCatchEvent id="signalEvent" name="Alert">            <signalEventDefinition signalRef="alertSignal" />        </intermediateCatchEvent>        <intermediateCatchEvent id="timerEvent" name="Alert">            <timerEventDefinition>                <timeDuration>PT10M</timeDuration>            </timerEventDefinition>        </intermediateCatchEvent>        <sequenceFlow sourceRef="timerEvent" targetRef="exGw1" />        <sequenceFlow sourceRef="signalEvent" targetRef="task" />        <userTask id="task" name="Handle alert"/>        <exclusiveGateway id="exGw1" />        <sequenceFlow sourceRef="task" targetRef="exGw1" />        <sequenceFlow sourceRef="exGw1" targetRef="end" />        <endEvent id="end" />    </process></definitions>
+<!--文档案例-->
+<signal id="alertSignal" name="alert" />
+<process id="catchSignal">
+    <startEvent id="start" />
+    <sequenceFlow sourceRef="start" targetRef="gw1" />
+    <eventBasedGateway id="gw1" />
+    <sequenceFlow sourceRef="gw1" targetRef="signalEvent" />
+    <sequenceFlow sourceRef="gw1" targetRef="timerEvent" />
+    <intermediateCatchEvent id="signalEvent" name="Alert">
+        <signalEventDefinition signalRef="alertSignal" />
+    </intermediateCatchEvent>
+    <intermediateCatchEvent id="timerEvent" name="Alert">
+        <timerEventDefinition>
+            <timeDuration>PT10M</timeDuration>
+        </timerEventDefinition>
+    </intermediateCatchEvent>
+    <sequenceFlow sourceRef="timerEvent" targetRef="exGw1" />
+    <sequenceFlow sourceRef="signalEvent" targetRef="task" />
+    <userTask id="task" name="Handle alert"/>
+    <exclusiveGateway id="exGw1" />
+    <sequenceFlow sourceRef="task" targetRef="exGw1" />
+    <sequenceFlow sourceRef="exGw1" targetRef="end" />
+    <endEvent id="end" />
+</process>
 ```
 
 ### Task
@@ -1067,13 +2150,19 @@ HashMap<String, Object> variableMap = new HashMap<String, Object>();          va
 用户任务在 XML 中定义如下。 id 属性是必需的，name 属性是可选的。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="用户任务演示">    <process id="user_task" name="userTask">        <userTask id="theTask" name="Important task"/>    </process></definitions>
+<!--一个基本的userTask-->
+<userTask id="theTask" name="Important task"/>
 ```
 
 用户任务也可以有描述。事实上，任何 BPMN 2.0 元素都可以有描述。描述是通过添加文档元素来定义的。
 
 ```xml
-<userTask id="theTask" name="Schedule meeting" >            <documentation>                Schedule an engineering meeting for next week with the new hire.            </documentation></userTask>
+<!--增加文档描述的UserTask-->
+<userTask id="theTask2" name="Schedule meeting" >
+    <documentation>
+        Schedule an engineering meeting for next week with the new hire.
+    </documentation>
+</userTask>
 ```
 
 描述文本可以通过标准 Java 方式从任务中检索：
@@ -1089,7 +2178,8 @@ task.getDescription();
 有一个活动扩展，它允许您在任务定义中指定一个表达式，以在创建任务时设置它的初始截止日期。该表达式应始终解析为 java.util.Date、java.util.String（ISO8601 格式）、ISO8601 持续时间（例如 PT50M）或 null。例如，您可以使用在流程中的先前（节点）表单中输入或在先前服务任务中计算的日期。如果使用 time-duration，到期日期将根据当前时间计算，增加给定的时间段。例如，当“PT30M”用作dueDate 时，任务将在30 分钟后到期。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="用户任务演示">    <process id="user_task" name="userTask">        <!--具有过期时间的UserTask-->        <userTask id="theTask3" name="Important task" activiti:dueDate="${dateVariable}"/>    </process></definitions>
+<!--具有过期时间的UserTask-->
+<userTask id="theTask3" name="Important task" activiti:dueDate="${dateVariable}"/>
 ```
 
 也可以使用 TaskService 或使用传递的 DelegateTask 在 TaskListeners 中更改任务的截止日期。
@@ -1099,7 +2189,14 @@ task.getDescription();
 用户任务可以直接分配给用户。这是通过定义一个 humanPerformer 子元素来完成的。这样的**humanPerformer**定义需要一个实际定义用户的**resourceAssignmentExpression**。目前，仅支持**formalExpressions** 。
 
 ```xml
-<!--指定分配用户--><userTask id='theTask4' name='important task' >    <humanPerformer>        <resourceAssignmentExpression>            <formalExpression>kermit</formalExpression>        </resourceAssignmentExpression>    </humanPerformer></userTask>
+<!--指定分配用户-->
+<userTask id='theTask4' name='important task' >
+    <humanPerformer>
+        <resourceAssignmentExpression>
+            <formalExpression>kermit</formalExpression>
+        </resourceAssignmentExpression>
+    </humanPerformer>
+</userTask>
 ```
 
 只能将一名用户分配为任务的人工执行者。在 Activiti 术语中，此用户称为受让人。具有受托人的任务在其他人的任务列表中不可见，而可以在受托人的所谓个人任务列表中找到。
@@ -1113,7 +2210,14 @@ List<Task> tasks = taskService.createTaskQuery().taskAssignee("kermit").list();
 任务也可以放在所谓的人员候选任务列表中。在这种情况下，必须使用potentialOwner 构造。用法类似于 humanPerformer 构造。请注意，形式表达式中的每个元素都需要定义，以指定它是用户还是组（引擎无法猜测）。
 
 ```xml
-<!--指定候选人列表或组--><userTask id='theTask5' name='important task' >    <potentialOwner>        <resourceAssignmentExpression>            <formalExpression>user(kermit), group(management)</formalExpression>        </resourceAssignmentExpression>    </potentialOwner></userTask>
+<!--指定候选人列表或组-->
+<userTask id='theTask5' name='important task' >
+    <potentialOwner>
+        <resourceAssignmentExpression>
+            <formalExpression>user(kermit), group(management)</formalExpression>
+        </resourceAssignmentExpression>
+    </potentialOwner>
+</userTask>
 ```
 
 使用潜在所有者构造定义的任务可以按如下方式检索（或类似于具有受托人的任务的 TaskQuery 用法）：
@@ -1153,7 +2257,8 @@ List<Task> tasks = taskService.createTaskQuery().taskCandidateUser("kermit");
 - **candidateGroups attribute**: 此自定义扩展允许使组成为任务的候选者。
 
   ```xml
-  <!--任务候选组(只能是组)--><userTask id="theTask8" name="my task" activiti:candidateGroups="management, accountancy"/>
+  <!--任务候选组(只能是组)-->
+  <userTask id="theTask8" name="my task" activiti:candidateGroups="management, accountancy"/>
   ```
 
   这与使用上述定义的potentialOwner 构造完全相同。请注意，不需要像潜在所有者构造那样使用组（管理）声明，因为该属性只能用于组。
@@ -1177,7 +2282,16 @@ BPMN 标准和 Activiti 示例授权标识是**user** 和**group**。如上一�
 如果需要其他链接类型，可以使用以下语法将自定义资源定义为扩展元素：
 
 ```xml
-<!--(实验性的)自定义扩展链接类型--><userTask id="theTask9" name="make profit">    <extensionElements>        <activiti:customResource activiti:name="businessAdministrator">            <resourceAssignmentExpression>                <formalExpression>user(kermit), group(management)</formalExpression>            </resourceAssignmentExpression>        </activiti:customResource>    </extensionElements></userTask>
+<!--(实验性的)自定义扩展链接类型-->
+<userTask id="theTask9" name="make profit">
+    <extensionElements>
+        <activiti:customResource activiti:name="businessAdministrator">
+            <resourceAssignmentExpression>
+                <formalExpression>user(kermit), group(management)</formalExpression>
+            </resourceAssignmentExpression>
+        </activiti:customResource>
+    </extensionElements>
+</userTask>
 ```
 
 自定义链接表达式添加到 TaskDefinition 类：
@@ -1265,7 +2379,15 @@ public class FakeLdapService {
 脚本任务是通过指定脚本和脚本格式来定义的。
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?><definitions        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"        xmlns:activiti="http://activiti.org/bpmn"        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"        xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL                    https://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd"        xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"        xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"        xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"        targetNamespace="脚本任务">    <process id="scriptTask" name="Script Task">        <scriptTask id="theScriptTask" name="Execute script" scriptFormat="groovy">            <script>                sum = 0                for ( i in inputArray ) {                sum += i                }            </script>        </scriptTask>    </process></definitions>
+<!--scriptFormat：指定脚本类型。具体规范详见文档-->
+<scriptTask id="theScriptTask" name="Execute script" scriptFormat="groovy">
+    <script>
+        sum = 0
+        for ( i in inputArray ) {
+        sum += i
+        }
+    </script>
+</scriptTask>
 ```
 
 scriptFormat 属性的值必须是与[JSR-223](http://jcp.org/en/jsr/detail?id=223)（Java 平台脚本）兼容的名称。默认情况下，每个 JDK 中都包含 JavaScript，因此不需要任何额外的 jar。如果您想使用另一个（与 JSR-223 兼容的）脚本引擎，将相应的 jar 添加到类路径并使用适当的名称就足够了。例如，Activiti 单元测试经常使用 Groovy，因为其语法与 Java 的语法非常相似。
@@ -1273,7 +2395,11 @@ scriptFormat 属性的值必须是与[JSR-223](http://jcp.org/en/jsr/detail?id=2
 请注意，Groovy 脚本引擎与 groovy-all jar 捆绑在一起。在 2.0 版之前，脚本引擎是常规 Groovy jar 的一部分。因此，现在必须添加以下依赖项：
 
 ```xml
-<dependency>      <groupId>org.codehaus.groovy</groupId>      <artifactId>groovy-all</artifactId>      <version>2.x.x<version></dependency>
+<dependency>      
+    <groupId>org.codehaus.groovy</groupId>      
+    <artifactId>groovy-all</artifactId>      
+    <version>2.x.x<version>
+</dependency>
 ```
 
 ##### 脚本中的变量
@@ -1281,13 +2407,19 @@ scriptFormat 属性的值必须是与[JSR-223](http://jcp.org/en/jsr/detail?id=2
 通过到达脚本任务的执行可访问的所有流程变量都可以在脚本中使用。在示例中，脚本变量“inputArray”实际上是一个过程变量（整数数组）。
 
 ```xml
-<script>    sum = 0    for ( i in inputArray ) {    sum += i    }</script>
+<script>    
+    sum = 0    
+    for ( i in inputArray ) {    
+    sum += i    
+    }
+</script>
 ```
 
 也可以在脚本中设置流程变量，只需调用 execution.setVariable("variableName", variableValue)。默认情况下，不会自动存储任何变量（注意：在 Activiti 5.12 之前就是这种情况！）。通过将 scriptTask 上的 autoStoreVariables 属性设置为 true，可以自动存储脚本中定义的任何变量（例如上面示例中的 sum）。但是，最佳做法是不要这样做并使用显式 execution.setVariable() 调用，因为在某些最新版本的 JDK 上，自动存储变量对某些脚本语言不起作用。有关更多详细信息，请参阅此链接。
 
 ```xml
-<!--设置自动存储变量。默认值：false--><scriptTask id="script" scriptFormat="JavaScript" activiti:autoStoreVariables="false"/>
+<!--设置自动存储变量。默认值：false-->
+<scriptTask id="script" scriptFormat="JavaScript" activiti:autoStoreVariables="false"/>
 ```
 
 该参数的默认值为false，意味着如果在脚本任务定义中省略该参数，则所有声明的变量将仅在脚本运行期间存在。
@@ -1295,7 +2427,9 @@ scriptFormat 属性的值必须是与[JSR-223](http://jcp.org/en/jsr/detail?id=2
 关于如何在脚本中设置变量的示例：
 
 ```xml
-<script>    def scriptVar = "test123"    execution.setVariable("myVar", scriptVar)</script>
+<script>    
+    def scriptVar = "test123"    execution.setVariable("myVar", scriptVar)
+</script>
 ```
 
 注意：以下名称是保留的，不能用作变量名称：out、out:print、lang:import、context、elcontext。
