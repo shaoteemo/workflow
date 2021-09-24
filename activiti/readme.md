@@ -1978,7 +1978,13 @@ Activiti 发行版包含以下使用值和方法表达式的示例流程（请�
 上面的例子中，进程启动后，会创建两个任务：
 
 ```java
-ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");TaskQuery query = taskService.createTaskQuery()                         .processInstanceId(pi.getId())                         .orderByTaskName()                         .asc();List<Task> tasks = query.list();assertEquals(2, tasks.size());Task task1 = tasks.get(0);assertEquals("Receive Payment", task1.getName());Task task2 = tasks.get(1);assertEquals("Ship Order", task2.getName());
+ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");
+TaskQuery query = taskService.createTaskQuery()                         
+    .processInstanceId(pi.getId())                         
+    .orderByTaskName()                         
+    .asc();
+List<Task> tasks = query.list();assertEquals(2, tasks.size());
+Task task1 = tasks.get(0);assertEquals("Receive Payment", task1.getName());Task task2 = tasks.get(1);assertEquals("Ship Order",task2.getName());
 ```
 
 当这两个任务完成时，第二个并行网关将加入两个执行，由于只有一个输出序列流，因此不会创建并发执行路径，只有存档订单任务将处于活动状态。
@@ -2065,7 +2071,15 @@ ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");TaskQu
 在上面的例子中，流程启动后，如果流程变量paymentReceived == false和shipOrder == true，则会创建两个任务。如果这些流程变量中只有一个等于 true，则只会创建一项任务。如果没有条件评估为true并抛出异常。这可以**通过指定默认的传出序列流来防止**。在以下示例中，将创建一项任务，即船舶订单任务：
 
 ```java
-HashMap<String, Object> variableMap = new HashMap<String, Object>();          variableMap.put("receivedPayment", true);          variableMap.put("shipOrder", true);          ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");TaskQuery query = taskService.createTaskQuery()                         .processInstanceId(pi.getId())                         .orderByTaskName()                         .asc();List<Task> tasks = query.list();assertEquals(1, tasks.size());Task task = tasks.get(0);assertEquals("Ship Order", task.getName());
+HashMap<String, Object> variableMap = new HashMap<String, Object>();          
+variableMap.put("receivedPayment", true);          
+variableMap.put("shipOrder", true);          
+ProcessInstance pi = runtimeService.startProcessInstanceByKey("forkJoin");
+TaskQuery query = taskService.createTaskQuery()                         
+    .processInstanceId(pi.getId())                         
+    .orderByTaskName()                         
+    .asc();
+List<Task> tasks = query.list();assertEquals(1, tasks.size());Task task = tasks.get(0);assertEquals("Ship Order", task.getName());
 ```
 
 当此任务完成时，第二个包容网关将加入两次执行，并且由于只有一个传出序列流，因此不会创建并发执行路径，并且只有存档订单任务将处于活动状态。
@@ -2277,7 +2291,16 @@ BPMN 标准支持单个分配的用户或 humanPerformer 或potentialOwners，�
 支持的 Activiti 身份链接类型有：
 
 ```java
-package org.activiti.engine.task;import org.activiti.engine.TaskService;public class IdentityLinkType {  /* Activiti native roles */  public static final String ASSIGNEE = "assignee";  public static final String CANDIDATE = "candidate";  public static final String OWNER = "owner";  public static final String STARTER = "starter";  public static final String PARTICIPANT = "participant";}
+package org.activiti.engine.task;
+import org.activiti.engine.TaskService;
+public class IdentityLinkType {  
+    /* Activiti native roles */  
+    public static final String ASSIGNEE = "assignee";  
+    public static final String CANDIDATE = "candidate";  
+    public static final String OWNER = "owner";  
+    public static final String STARTER = "starter";  
+    public static final String PARTICIPANT = "participant";
+}
 ```
 
 BPMN 标准和 Activiti 示例授权标识是**user** 和**group**。如上一节所述，Activiti 身份管理实现不用于生产用途，但应根据支持的授权方案进行扩展。
@@ -2300,7 +2323,20 @@ BPMN 标准和 Activiti 示例授权标识是**user** 和**group**。如上一�
 自定义链接表达式添加到 TaskDefinition 类：
 
 ```java
-protected Map<String, Set<Expression>> customUserIdentityLinkExpressions =      new HashMap<String, Set<Expression>>();protected Map<String, Set<Expression>> customGroupIdentityLinkExpressions =      new HashMap<String, Set<Expression>>();public Map<String,         Set<Expression>> getCustomUserIdentityLinkExpressions() {  return customUserIdentityLinkExpressions;}public void addCustomUserIdentityLinkExpression(String identityLinkType,      Set<Expression> idList)  customUserIdentityLinkExpressions.put(identityLinkType, idList);}public Map<String,       Set<Expression>> getCustomGroupIdentityLinkExpressions() {  return customGroupIdentityLinkExpressions;}public void addCustomGroupIdentityLinkExpression(String identityLinkType,       Set<Expression> idList) {  customGroupIdentityLinkExpressions.put(identityLinkType, idList);}
+protected Map<String, Set<Expression>> customUserIdentityLinkExpressions = new HashMap<String, Set<Expression>>();
+protected Map<String, Set<Expression>> customGroupIdentityLinkExpressions =  new HashMap<String, Set<Expression>>();
+public Map<String, Set<Expression>> getCustomUserIdentityLinkExpressions() {  
+    return customUserIdentityLinkExpressions;
+}
+public void addCustomUserIdentityLinkExpression(String identityLinkType, Set<Expression> idList)  
+    customUserIdentityLinkExpressions.put(identityLinkType, idList);
+}
+public Map<String, Set<Expression>> getCustomGroupIdentityLinkExpressions() {  
+    return customGroupIdentityLinkExpressions;
+}
+public void addCustomGroupIdentityLinkExpression(String identityLinkType, Set<Expression> idList) {  
+    customGroupIdentityLinkExpressions.put(identityLinkType, idList);
+}
 ```
 
 它们在运行时由 UserTaskActivityBehavior handleAssignments 方法填充。
@@ -2308,7 +2344,11 @@ protected Map<String, Set<Expression>> customUserIdentityLinkExpressions =      
 最后，必须扩展 IdentityLinkType 类以支持自定义身份链接类型：
 
 ```Java
-public class IdentityLinkType    /*继承官方链接类型类以扩展类型*/    extends org.activiti.engine.task.IdentityLinkType{    public static final String ADMINISTRATOR = "administrator";    public static final String EXCLUDED_OWNER = "excludedOwner";}
+public class IdentityLinkType    /*继承官方链接类型类以扩展类型*/    
+    extends org.activiti.engine.task.IdentityLinkType{    
+    public static final String ADMINISTRATOR = "administrator";    
+    public static final String EXCLUDED_OWNER = "excludedOwner";
+}
 ```
 
 通过任务监听器（TaskListener）自定义分配：
@@ -2316,7 +2356,11 @@ public class IdentityLinkType    /*继承官方链接类型类以扩展类型*/ 
 如果前面的方法还不够，可以使用 create event上的[task listener](https://www.activiti.org/userguide/#taskListeners)委托自定义分配逻辑：
 
 ```xml
-<userTask id="task1" name="My task" >  <extensionElements>    <activiti:taskListener event="create" class="org.activiti.MyAssignmentHandler" />  </extensionElements></userTask>
+<userTask id="task1" name="My task" >  
+    <extensionElements>    
+        <activiti:taskListener event="create" class="org.activiti.MyAssignmentHandler" />  
+    </extensionElements>
+</userTask>
 ```
 
 实现**TaskListener**接口并传递**DelegateTask** 。允许设置assignee 和candidate-users/groups：
