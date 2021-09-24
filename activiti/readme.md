@@ -3849,3 +3849,1800 @@ API 还允许您在 Activiti Engine 之外执行您自己的任务表单渲染�
 
 ## JPA
 
+您可以使用 JPA-Entities 作为流程变量，允许您：
+
+- 根据可以在 userTask 中的表单中填写或在 serviceTask 中生成的流程变量更新现有 JPA-entities。
+- 重用现有的域模型，而无需编写显式服务来获取实体和更新值
+- 根据现有实体的属性做出决策（网关）。
+- .....
+
+### 1.基本要求
+
+仅支持符合以下条件的实体：
+
+- 实体应该使用 JPA 注释进行配置，我们支持字段和属性访问。也可以使用映射的超类。
+- 实体应该有一个用`@Id` 注释的主键，不支持复合主键（`@EmbeddedId` 和`@IdClass`）。Id 字段/属性可以是 JPA 规范中支持的任何类型：原始类型及其包装器（不包括boolean）、`String`、`BigInteger`、`BigDecimal`、`java.util.Date` 和 `java.sql.Date`。
+
+### 2.配置
+
+为了能够使用 JPA 实体，引擎必须具有对 `EntityManagerFactory` 的引用。这可以通过配置引用或提供持久性单元名称来完成。用作变量的 JPA 实体将被自动检测并进行相应处理。
+
+下面的示例配置使用 jpaPersistenceUnitName：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="processEngineConfiguration"
+          class="org.activiti.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration">
+
+        <!-- Database configurations -->
+        <property name="databaseSchemaUpdate" value="true" />
+        <property name="jdbcUrl" value="jdbc:h2:mem:JpaVariableTest;DB_CLOSE_DELAY=1000" />
+
+        <property name="jpaPersistenceUnitName" value="activiti-jpa-pu" />
+        <property name="jpaHandleTransaction" value="true" />
+        <property name="jpaCloseEntityManager" value="true" />
+
+        <!-- job executor configurations -->
+        <property name="jobExecutorActivate" value="false" />
+
+        <!-- mail server configurations -->
+        <property name="mailServerPort" value="5025" />
+    </bean>
+
+</beans>
+```
+
+下面的下一个示例配置提供了一个我们自己定义的 `EntityManagerFactory`（在本例中，是一个 open-jpa 实体管理器）。请注意，该代码段仅包含与示例相关的 bean，其他的都被省略了。可以在 activiti-spring-examples (`/activiti-spring/src/test/java/org/activiti/spring/test/jpa/JPASpringTest.java`) 中找到带有 open-jpa 实体管理器的完整工作示例
+
+```xml
+<!--EntityManagerFactory-->
+<bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+    <property name="persistenceUnitManager" ref="pum"/>
+    <property name="jpaVendorAdapter">
+        <bean class="org.springframework.orm.jpa.vendor.OpenJpaVendorAdapter">
+            <property name="databasePlatform" value="org.apache.openjpa.jdbc.sql.H2Dictionary" />
+        </bean>
+    </property>
+</bean>
+<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
+    <property name="dataSource" ref="dataSource" />
+    <property name="transactionManager" ref="transactionManager" />
+    <property name="databaseSchemaUpdate" value="true" />
+    <property name="jpaEntityManagerFactory" ref="entityManagerFactory" />
+    <property name="jpaHandleTransaction" value="true" />
+    <property name="jpaCloseEntityManager" value="true" />
+    <property name="jobExecutorActivate" value="false" />
+</bean>
+```
+
+以Java代码方式构建引擎时也可以进行相同的配置，例如：
+
+```java
+ProcessEngine processEngine = ProcessEngineConfiguration
+.createProcessEngineConfigurationFromResourceDefault()
+.setJpaPersistenceUnitName("activiti-pu")
+.buildProcessEngine();
+```
+
+配置属性：
+
+- `jpaPersistenceUnitName`：要使用的持久性单元的名称。（确保持久单元在类路径上可用。根据规范，默认位置是 `/META-INF/persistence.xml`）。使用 `jpaEntityManagerFactory` 或 `paPersistenceUnitName`。
+- `jpaEntityManagerFactory`: 对实现 `javax.persistence.EntityManagerFactory` 的 bean 的引用，该 bean 将用于加载实体和刷新更新。使用 jpaEntityManagerFactory 或 jpaPersistenceUnitName。
+- `jpaHandleTransaction`: 指示引擎应该在使用的 EntityManager 实例上开始和提交/回滚事务的标志。使用 Java 事务 API (JTA) 时设置为 false。
+- `jpaCloseEntityManager`:指示引擎应关闭从 `EntityManagerFactory` 获取的 `EntityManager` 实例的标志。当 EntityManager 由容器管理时（例如，当使用不限于单个事务的扩展持久性上下文时），设置为 false。
+
+### 3.使用
+
+#### 3.1基本使用
+
+可以在 Activiti 源代码中的 JPAVariableTest 中找到使用 JPA 变量的示例。我们将逐步解释 `JPAVariableTest.testUpdateJPAEntityValues`。
+
+首先，我们为我们的持久化单元创建一个 EntityManagerFactory，它基于 `META-INF/persistence.xml`。这包含应该包含在持久性单元中的类和一些特定于供应商的配置。
+
+我们在测试中使用了一个简单的实体，它有一个 id 和 `String` 值属性，它也被持久化。在运行测试之前，我们创建一个实体并保存它。
+
+```java
+@Entity(name = "JPA_ENTITY_FIELD")
+public class FieldAccessJPAEntity {
+
+  @Id
+  @Column(name = "ID_")
+  private Long id;
+
+  private String value;
+
+  public FieldAccessJPAEntity() {
+    // Empty constructor needed for JPA
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
+}
+```
+
+我们启动一个新的流程实例，将实体添加为变量。与其他变量一样，它们存储在引擎的持久存储中。当下次请求该变量时，它将根据存储的类和 Id 从 `EntityManager` 加载。
+
+```java
+Map<String, Object> variables = new HashMap<String, Object>();
+variables.put("entityToUpdate", entityToUpdate);
+
+ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("UpdateJPAValuesProcess", variables);
+```
+
+我们流程定义中的第一个节点包含一个 `serviceTask`，它将调用 `entityToUpdate` 上的 `setValue` 方法，它解析为我们之前在启动流程实例时设置的 JPA 变量，并将从与当前引擎上下文关联的 `EntityManager` 加载。
+
+```xml
+<serviceTask id='theTask' name='updateJPAEntityTask'
+  activiti:expression="${entityToUpdate.setValue('updatedValue')}" />
+```
+
+当服务任务完成时，流程实例在流程定义中定义的 userTask 中等待，这允许我们检查流程实例。此时，`EntityManager` 已被刷新，对实体的更改已推送到数据库。当我们获得变量 `entityToUpdate` 的值时，它会再次加载，我们将获得 `value` 属性设置为 `updatedValue` 的实体。
+
+```java
+// Servicetask in process 'UpdateJPAValuesProcess' should have set value on entityToUpdate.
+Object updatedEntity = runtimeService.getVariable(processInstance.getId(), "entityToUpdate");
+assertTrue(updatedEntity instanceof FieldAccessJPAEntity);
+assertEquals("updatedValue", ((FieldAccessJPAEntity)updatedEntity).getValue());
+```
+
+#### 3.2JPA检索流程变量
+
+您可以查询具有特定 JPA 实体作为变量值的 `ProcessInstances` 和 `Executions`。请注意，`ProcessInstanceQuery` 和 `ExecutionQuery` 上的 JPA-Entities 仅支持 `variableValueEquals(name, entity)`。方法 `variableValueNotEquals`、`variableValueGreaterThan`、`variableValueGreaterThanOrEqual`、`variableValueLessThan` 和 `variableValueLessThanOrEqual` 不受支持，并且当 JPA-Entity 作为值传递时将抛出 `ActivitiException`。
+
+```java
+ProcessInstance result = runtimeService.createProcessInstanceQuery()
+    .variableValueEquals("entityToQuery", entityToQuery).singleResult();
+```
+
+#### 3.3使用 Spring bean 和 JPA 的高级示例
+
+一个更高级的例子，`JPASpringTest`，可以在 `activiti-spring-examples` 中找到。它描述了以下简单用例：
+
+- 使用 JPA 实体的现有 Spring-bean 已经存在，它允许存储请求。
+- 使用 Activiti，我们可以使用通过现有 bean 获得的现有实体，并将它们用作我们流程中的变量。流程定义为以下步骤：
+  - 创建新 LoanRequest 的服务任务，使用现有 `LoanRequestBean` 使用启动流程时的变量（例如可能来自启动表单）。创建的实体存储为变量，使用 `activiti:resultVariable` 将表达式结果存储为变量。
+  - 允许管理审查请求和批准/不批准的 UserTask，它存储为布尔变量 ·allowedByManager`。
+  - ServiceTask 更新请求实体，以便实体与流程同步。
+  - 根据`approved`实体属性的值，使用独占网关来决定下一步要走的路径：当请求被批准时，流程结束，否则，将有一个额外的任务（发送拒绝信），因此可以通过拒绝信手动通知客户。
+
+请注意，该过程不包含任何表单，因为它仅用于单元测试。
+
+![](http://rep.shaoteemo.com/jpa.spring.example.process.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="taskAssigneeExample"
+  xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:activiti="http://activiti.org/bpmn"
+  targetNamespace="org.activiti.examples">
+
+  <process id="LoanRequestProcess" name="Process creating and handling loan request">
+    <startEvent id='theStart' />
+    <sequenceFlow id='flow1' sourceRef='theStart' targetRef='createLoanRequest' />
+
+    <serviceTask id='createLoanRequest' name='Create loan request'
+      activiti:expression="${loanRequestBean.newLoanRequest(customerName, amount)}"
+      activiti:resultVariable="loanRequest"/>
+    <sequenceFlow id='flow2' sourceRef='createLoanRequest' targetRef='approveTask' />
+
+    <userTask id="approveTask" name="Approve request" />
+    <sequenceFlow id='flow3' sourceRef='approveTask' targetRef='approveOrDissaprove' />
+
+    <serviceTask id='approveOrDissaprove' name='Store decision'
+      activiti:expression="${loanRequest.setApproved(approvedByManager)}" />
+    <sequenceFlow id='flow4' sourceRef='approveOrDissaprove' targetRef='exclusiveGw' />
+
+    <exclusiveGateway id="exclusiveGw" name="Exclusive Gateway approval" />
+    <sequenceFlow id="endFlow1" sourceRef="exclusiveGw" targetRef="theEnd">
+      <conditionExpression xsi:type="tFormalExpression">${loanRequest.approved}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="endFlow2" sourceRef="exclusiveGw" targetRef="sendRejectionLetter">
+      <conditionExpression xsi:type="tFormalExpression">${!loanRequest.approved}</conditionExpression>
+    </sequenceFlow>
+
+    <userTask id="sendRejectionLetter" name="Send rejection letter" />
+    <sequenceFlow id='flow5' sourceRef='sendRejectionLetter' targetRef='theOtherEnd' />
+
+    <endEvent id='theEnd' />
+    <endEvent id='theOtherEnd' />
+  </process>
+
+</definitions>
+```
+
+## History
+
+历史记录是捕获流程执行期间发生的事情并将其永久存储的组件。与运行时数据相反，历史数据在流程实例完成后也将保留在 DB 中。
+
+有5个历史实体：
+
+- `HistoricProcessInstance`包含有关当前和过去流程实例的信息。
+- `HistoricVariableInstance`包含流程变量或任务变量的最新值。
+- `HistoricActivityInstance`包含有关活动（流程中的节点）的单次执行的信息。
+- `HistoricTaskInstance`包含有关当前和过去（已完成和已删除）任务实例的信息。
+- `HistoricDetail`包含与历史流程实例、活动实例或任务实例相关的各种信息。
+
+### 1.历史信息检索
+
+在 API 中，可以查询所有 5 个历史实体。`HistoryService` 公开了 `createHistoricProcessInstanceQuery()`、`createHistoricVariableInstanceQuery()`、`createHistoricActivityInstanceQuery()`、`createHistoricDetailQuery() `和 `createHistoricTaskInstanceQuery() `方法。
+
+下面是几个示例，展示了历史查询 API 的一些可能性。可以在 `org.activiti.engine.history `包中的 javadocs 中找到对可能性的完整描述。
+
+#### 1.1HistoricProcessInstance检索
+
+获取 10 个已完成的 `HistoricProcessInstances`，在定义为 XXX 的所有已完成流程中，完成时间最长（持续时间最长）。
+
+```java
+historyService.createHistoricProcessInstanceQuery()
+  .finished()
+  .processDefinitionId("XXX")
+  .orderByProcessInstanceDuration().desc()
+  .listPage(0, 10);
+```
+
+#### 1.2HistoricVariableInstance检索
+
+从已完成的流程实例中获取所有 `HistoricVariableInstances`，id 为 xxx，按变量名称排序。
+
+```java
+historyService.createHistoricVariableInstanceQuery()
+  .processInstanceId("XXX")
+  .orderByVariableName.desc()
+  .list();
+```
+
+#### 1.3HistoricActivityInstance检索
+
+获取在任何使用具有 id 为 XXX 的 processDefinition 的进程中已完成的类型为 serviceTask 的最后一个 `HistoricActivityInstance`。
+
+```java
+historyService.createHistoricActivityInstanceQuery()
+  .activityType("serviceTask")
+  .processDefinitionId("XXX")
+  .finished()
+  .orderByHistoricActivityInstanceEndTime().desc()
+  .listPage(0, 1);
+```
+
+#### 1.4HistoricDetail检索
+
+下一个示例，获取所有在进程中已完成且 ID 为 123 的变量更新。此查询将仅返回 `HistoricVariableUpdates`。请注意，某个变量名称可能有多个 `HistoricVariableUpdate` 条目，每次在流程中更新该变量。您可以使用` orderByTime`（变量更新完成的时间）或 `orderByVariableRevision`（更新时运行时变量的修订）来找出它们发生的顺序。
+
+```java
+historyService.createHistoricDetailQuery()
+  .variableUpdates()
+  .processInstanceId("123")
+  .orderByVariableName().asc()
+  .list()
+```
+
+此示例获取在任何任务中或在以 id“123”启动流程时提交的所有表单属性。此查询将仅返回 `HistoricFormPropertiess`。
+
+```java
+historyService.createHistoricDetailQuery()
+  .formProperties()
+  .processInstanceId("123")
+  .orderByVariableName().asc()
+  .list()
+```
+
+最后一个示例获取对 ID 为“123”的任务执行的所有变量更新。这将返回在任务上设置的变量（任务局部变量）的所有 `HistoricVariableUpdates`，而不是在流程实例上。
+
+```java
+historyService.createHistoricDetailQuery()
+  .variableUpdates()
+  .taskId("123")
+  .orderByVariableName().asc()
+  .list()
+```
+
+可以使用 `TaskService`或在 `TaskListener` 内部的 `DelegateTask` 上设置任务局部变量：
+
+```java
+taskService.setVariableLocal("123", "myVariable", "Variable value");
+```
+
+```java
+public void notify(DelegateTask delegateTask) {
+  delegateTask.setVariableLocal("myVariable", "Variable value");
+}
+```
+
+#### 1.5HistoricTaskInstance检索
+
+获取 10 个已完成且完成时间最长（持续时间最长）的 `HistoricTaskInstances`。
+
+```java
+historyService.createHistoricTaskInstanceQuery()
+  .finished()
+  .orderByHistoricTaskInstanceDuration().desc()
+  .listPage(0, 10);
+```
+
+获取因删除原因包含“无效”而被删除的 `HistoricTaskInstances`，这些实例最后分配给用户 kermit。
+
+```java
+historyService.createHistoricTaskInstanceQuery()
+  .finished()
+  .taskDeleteReasonLike("%invalid%")
+  .taskAssignee("kermit")
+  .listPage(0, 10);
+```
+
+### 2.历史配置
+
+可以使用枚举 `org.activiti.engine.impl.history.HistoryLevel`（或 5.11 之前版本的 `ProcessEngineConfiguration` 上定义的 HISTORY 常量）以编程方式配置历史级别：
+
+```java
+ProcessEngine processEngine = ProcessEngineConfiguration
+  .createProcessEngineConfigurationFromResourceDefault()
+  .setHistory(HistoryLevel.AUDIT.getKey())
+  .buildProcessEngine();
+```
+
+级别也可以在 activiti.cfg.xml 或 spring-context 中配置：
+
+```xml
+<bean id="processEngineConfiguration" class="org.activiti.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration">
+  <property name="history" value="audit" />
+  ...
+</bean>
+```
+
+可以配置以下历史级别：
+
+- `none`: 跳过所有历史存档。这是运行时流程执行的最高性能，但没有历史信息可用。
+- `activity`: 归档所有流程实例和活动实例。在流程实例结束时，顶级流程实例变量的最新值将被复制到历史变量实例中。不会存档任何详细信息。
+- `audit`: 这是**默认设置**。它归档所有流程实例、活动实例，使变量值持续同步以及提交的所有表单属性，以便所有用户通过表单进行的交互都是可追踪的并且可以被审计。
+- `full`: 这是历史存档的最高级别，因此是最慢的。该级别存储与`audit`级别相同的所有信息以及所有其他可能的详细信息，主要是流程变量更新。
+
+在 Activiti 5.11 之前，历史级别存储在数据库中（表 ACT_GE_PROPERTY，名称为 historyLevel 的属性）。从 5.11 开始，此值不再使用，并从数据库中忽略/删除。现在可以在引擎的 2 次启动之间更改历史记录，如果级别从之前的引擎启动更改，则不会抛出异常。
+
+### 3.用于审计目的的历史记录
+
+配置至少是`audit`级别进行配置时。然后记录通过方法 `FormService.submitStartFormData(String processDefinitionId, Map<String, String> properties)` 和 `FormService.submitTaskFormData(String taskId, Map<String, String> properties)` 提交的所有属性。
+
+可以使用查询 API 检索表单属性，如下所示：
+
+```java
+historyService
+      .createHistoricDetailQuery()
+      .formProperties()
+      ...
+      .list();
+```
+
+在这种情况下，只返回 `HistoricFormProperty` 类型的历史细节。
+
+如果您在使用 `IdentityService.setAuthenticatedUserId(String)` 调用提交方法之前设置了经过身份验证的用户，那么提交表单的经过身份验证的用户将可以在历史记录中以及使用 `HistoricProcessInstance.getStartUserId()` 访问启动表单和 `HistoricActivityInstance.getAssignee( )` 用于任务表单。
+
+## Eclipse设计器的使用
+
+本节略。详情请查看[Eclipse Designer](https://www.activiti.org/userguide/#activitiDesigner)
+
+## REST API
+
+本节略。详情请查看[REST API](https://www.activiti.org/userguide/#_rest_api)
+
+## CDI集成
+
+activiti-cdi 模块利用了 Activiti 的可配置性和 cdi 的可扩展性。 activiti-cdi最突出的特点是：
+
+- 支持@BusinessProcessScoped bean（生命周期绑定到流程实例的Cdi bean），
+- 用于从进程中解析 Cdi bean（包括 EJB）的自定义 El-Resolver，
+- 使用注释对流程实例进行声明式控制，
+- Activiti 连接到 cdi 事件总线，
+- 适用于 Java EE 和 Java SE，适用于 Spring，
+- 支持单元测试。
+
+引入依赖：
+
+```xml
+<dependency>
+	<groupId>org.activiti</groupId>
+	<artifactId>activiti-cdi</artifactId>
+	<version>5.x</version>
+</dependency>
+```
+
+### 1.设置 activiti-cdi
+
+Activiti cdi 可以设置在不同的环境中。在本节中，我们简要介绍了配置选项。
+
+#### 1.1查找流程引擎
+
+cdi 扩展需要访问 ProcessEngine。为此，在运行时查找接口 `org.activiti.cdi.spi.ProcessEngineLookup` 的实现。cdi 模块附带一个名为 `org.activiti.cdi.impl.LocalProcessEngineLookup` 的默认实现，它使用 `ProcessEngines`-Utility 类来查找 ProcessEngine。在默认配置中 `ProcessEngines#NAME_DEFAULT` 用于查找 ProcessEngine。此类可能会被子类化以设置自定义名称。注意：在classpath需要一个 `activiti.cfg.xml` 配置文件。
+
+Activiti cdi 使用 java.util.ServiceLoader SPI 来解析 `org.activiti.cdi.spi.ProcessEngineLookup` 的实例。为了提供接口的自定义实现，我们需要在我们的部署中添加一个名为 `META-INF/services/org.activiti.cdi.spi.ProcessEngineLookup` 的纯文本文件，我们在其中指定实现的完全类名.
+
+注意：如果你没有提供自定义的 `org.activiti.cdi.spi.ProcessEngineLookup` 实现，Activiti 将使用默认的 `LocalProcessEngineLookup` 实现。在这种情况下，您需要做的就是在类路径上提供一个 activiti.cfg.xml 文件（请参阅下一节）。
+
+#### 1.2配置流程引擎
+
+配置取决于所选的 ProcessEngineLookup-Strategy（参见上一节）。在这里，我们专注于与 LocalProcessEngineLookup 结合使用的配置选项，这需要我们在Classpath中提供 Spring activiti.cfg.xml 文件。
+
+Activiti 提供了不同的 ProcessEngineConfiguration 实现，主要取决于底层的事务管理策略。activiti-cdi 模块不关心事务，这意味着可以使用潜在的任何事务管理策略（甚至是 Spring 事务抽象）。为方便起见，cdi 模块提供了两个自定义 ProcessEngineConfiguration 实现：
+
+- `org.activiti.cdi.CdiJtaProcessEngineConfiguration`: Activiti JtaProcessEngineConfiguration 的子类，如果 JTA 管理的事务应该用于 Activiti，则可以使用
+- `org.activiti.cdi.CdiStandaloneProcessEngineConfiguration`: Activiti StandaloneProcessEngineConfiguration 的子类，如果应该为 Activiti 使用普通的 JDBC 事务，则可以使用它。以下是 JBoss 7 的示例 activiti.cfg.xml 文件：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- lookup the JTA-Transaction manager -->
+	<bean id="transactionManager" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:jboss/TransactionManager"></property>
+		<property name="resourceRef" value="true" />
+	</bean>
+
+	<!-- process engine configuration -->
+	<bean id="processEngineConfiguration"
+		class="org.activiti.cdi.CdiJtaProcessEngineConfiguration">
+		<!-- lookup the default Jboss datasource -->
+		<property name="dataSourceJndiName" value="java:jboss/datasources/ExampleDS" />
+		<property name="databaseType" value="h2" />
+		<property name="transactionManager" ref="transactionManager" />
+		<!-- using externally managed transactions -->
+		<property name="transactionsExternallyManaged" value="true" />
+		<property name="databaseSchemaUpdate" value="true" />
+	</bean>
+</beans>
+```
+
+这就是 Glassfish 3.1.1 的样子（假设正确配置了名为 jdbc/activiti 的数据源）：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- lookup the JTA-Transaction manager -->
+	<bean id="transactionManager" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:appserver/TransactionManager"></property>
+		<property name="resourceRef" value="true" />
+	</bean>
+
+	<!-- process engine configuration -->
+	<bean id="processEngineConfiguration"
+		class="org.activiti.cdi.CdiJtaProcessEngineConfiguration">
+		<property name="dataSourceJndiName" value="jdbc/activiti" />
+		<property name="transactionManager" ref="transactionManager" />
+		<!-- using externally managed transactions -->
+		<property name="transactionsExternallyManaged" value="true" />
+		<property name="databaseSchemaUpdate" value="true" />
+	</bean>
+</beans>
+```
+
+注意上面的配置需要“spring-context”模块：
+
+```xml
+<dependency>
+	<groupId>org.springframework</groupId>
+	<artifactId>spring-context</artifactId>
+	<version>3.0.3.RELEASE</version>
+</dependency>
+```
+
+Java SE 环境中的配置与创建 ProcessEngine 部分中提供的示例完全相同，将“CdiStandaloneProcessEngineConfiguration”替换为“StandaloneProcessEngineConfiguration”。
+
+#### 1.3部署流程
+
+可以使用标准的 activiti-api (`RepositoryService`) 部署流程。此外，activiti-cdi 提供了自动部署在名为 `processes.xml` 的文件中列出的进程的可能性，该文件位于类路径的顶层。这是一个示例 processes.xml 文件：
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- list the processes to be deployed -->
+<processes>
+	<process resource="diagrams/myProcess.bpmn20.xml" />
+	<process resource="diagrams/myOtherProcess.bpmn20.xml" />
+</processes>
+```
+
+===使用 CDI 的上下文流程执行
+
+在本节中，我们将简要介绍 Activiti cdi 扩展使用的上下文流程执行模型。BPMN 业务流程通常是一个长期运行的交互，由用户和系统任务组成。在运行时，一个进程被分成一组单独的工作单元，由用户和（或）应用程序逻辑执行。在 activiti-cdi 中，流程实例可以与 cdi 范围相关联，该关联代表一个工作单元。如果工作单元很复杂，例如，如果 UserTask 的实现是不同形式的复杂序列，并且在此交互期间需要保持“non-process-scoped”状态，则这特别有用。
+
+在默认配置中，流程实例与“broadest”的活动范围相关联，从对话开始，如果对话上下文不活动，则回退到请求。
+
+#### 1.4Associating a Conversation with a Process Instance
+
+在解析 @BusinessProcessScoped bean 或注入流程变量时，我们依赖于活动 cdi 范围和流程实例之间的现有关联。Activiti-cdi 提供了 `org.activiti.cdi.BusinessProcess bean` 来控制关联，最突出的是：
+
+- startProcessBy(… ) 方法，镜像由 Activiti `RuntimeService` 公开的相应方法，允许启动并随后关联业务流程，
+- `resumeProcessById(String processInstanceId)`，允许将流程实例与提供的 id 相关联，
+- `resumeTaskById(String taskId)`，允许将任务与提供的 id（以及相应的流程实例）相关联，
+
+一旦完成一个工作单元（例如 UserTask），就可以调用 `completeTask()` 方法以将对话/请求与流程实例分离。这向 Activiti 发出信号，当前任务已完成，并使流程实例继续进行。
+
+请注意，`BusinessProcess`-bean 是一个`@Named bean`，这意味着可以使用表达式语言调用公开的方法，例如从 JSF 页面调用。以下 JSF2 片段开始一个新对话并将其与用户任务实例相关联，其 id 作为请求参数传递（例如 `pageName.jsf?taskId=XX`）：
+
+```XML
+<f:metadata>
+<f:viewParam name="taskId" />
+<f:event type="preRenderView" listener="#{businessProcess.startTask(taskId, true)}" />
+</f:metadata>
+```
+
+#### 1.5声明式控制流程
+
+Activiti-cdi 允许使用注释以声明方式启动流程实例并完成任务。`@org.activiti.cdi.annotation.StartProcess` 注释允许通过“key”或“name”启动流程实例。请注意，流程实例是在带注释的方法返回后启动的。例子：
+
+```java
+@StartProcess("authorizeBusinessTripRequest")
+public String submitRequest(BusinessTripRequest request) {
+	// do some work
+	return "success";
+}
+```
+
+根据 Activiti 的配置，注解方法的代码和流程实例的启动会合并在同一个事务中。 `@org.activiti.cdi.annotation.CompleteTask`-annotation 的工作方式相同：
+
+```JAVA
+@CompleteTask(endConversation=false)
+public String authorizeBusinessTrip() {
+	// do some work
+	return "success";
+}
+```
+
+`@CompleteTask` 注释提供了结束当前对话的可能性。默认行为是在对 Activiti 的调用返回后结束对话。如上例所示，可以禁用结束对话。
+
+#### 1.6从流程中引用 Bean
+
+Activiti-cdi 使用自定义解析器将 CDI bean 暴露给 Activiti El。这使得从进程中引用 bean 成为可能：
+
+```xml
+<userTask id="authorizeBusinessTrip" name="Authorize Business Trip"
+			activiti:assignee="#{authorizingManager.account.username}" />
+```
+
+其中“authorizingManager”可以是生产者方法提供的bean：
+
+```java
+@Inject	@ProcessVariable Object businessTripRequesterUsername;
+
+@Produces
+@Named
+public Employee authorizingManager() {
+	TypedQuery<Employee> query = entityManager.createQuery("SELECT e FROM Employee e WHERE e.account.username='"
+		+ businessTripRequesterUsername + "'", Employee.class);
+	Employee employee = query.getSingleResult();
+	return employee.getManager();
+}
+```
+
+我们可以使用相同的特性在服务任务中调用 EJB 的业务方法，使用 `activiti:expression="myEjb.method()"`-extension。请注意，这需要在 `MyEjb` 类上使用 `@Named`-annotation。
+
+#### 1.7使用@BusinessProcessScoped
+
+使用 activiti-cdi，可以将 bean 的生命周期绑定到流程实例。为此，提供了一个自定义上下文实现，即 BusinessProcessContext。 BusinessProcessScoped bean 的实例作为流程变量存储在当前流程实例中。BusinessProcessScoped bean 需要是 PassivationCapable（例如 Serializable）。以下是进程作用域 bean 的示例：
+
+```java
+@Named
+@BusinessProcessScoped
+public class BusinessTripRequest implements Serializable {
+	private static final long serialVersionUID = 1L;
+	private String startDate;
+	private String endDate;
+	// ...
+}
+```
+
+有时，我们希望在没有与流程实例关联的情况下使用流程范围的 bean，例如在启动流程之前。如果当前没有流程实例处于活动状态，则 BusinessProcessScoped bean 的实例会临时存储在本地范围（即对话或请求，取决于上下文）中。如果此范围稍后与业务流程实例相关联，则 bean 实例将被刷新到流程实例。
+
+#### 1.8注入流程变量
+
+工艺变量可用于注射。 Activiti-CDI 支持
+
+- 使用`@Inject \[additional qualifiers\] Type fieldName` 类型安全注入`@BusinessProcessScoped bean`
+- 使用 `@ProcessVariable(name?)` 限定符不安全地注入其他流程变量：
+
+```java
+@Inject @ProcessVariable Object accountNumber;
+@Inject @ProcessVariable("accountNumber") Object account
+```
+
+为了使用 EL 引用流程变量，我们有类似的选项：
+
+- `@Named @BusinessProcessScoped` bean 可以直接引用，
+- 可以使用 `ProcessVariables`-bean 引用其他流程变量：
+
+```JAVA
+#{processVariables['accountNumber']}
+```
+
+#### 1.9接收流程事件
+
+[[EXPERIMENTAL\]](https://www.activiti.org/userguide/#experimental)
+
+Activiti 可以连接到 CDI 事件总线。这允许我们使用标准的 CDI 事件机制来通知流程事件。为了开启Activiti的CDI事件支持，在配置中开启对应的解析监听器：
+
+```xml
+<property name="postBpmnParseHandlers">
+	<list>
+		<bean class="org.activiti.cdi.impl.event.CdiEventSupportBpmnParseHandler" />
+	</list>
+</property>
+```
+
+现在 Activiti 被配置为使用 CDI 事件总线发布事件。下面概述了如何在 CDI bean 中接收流程事件。在 CDI 中，我们可以使用 `@Observes`-annotation 声明性地指定事件观察者。事件通知是类型安全的。流程事件的类型是 `org.activiti.cdi.BusinessProcessEvent`。下面是一个简单的事件观察器方法的例子：
+
+```JAVA
+public void onProcessEvent(@Observes BusinessProcessEvent businessProcessEvent) {
+	// handle event
+}
+```
+
+该观察者将收到所有事件的通知。如果我们想限制观察者接收的事件集，我们可以添加限定符注释：
+
+- `@BusinessProcess`: 将事件集限制为某个流程定义。例子：`@Observes @BusinessProcess("billingProcess") BusinessProcessEvent evt`
+- `@StartActivity`: 通过某个活动限制事件集。例如：`@Observes @StartActivity("shipGoods") BusinessProcessEvent evt` 每当输入 ID 为“shipGoods”的活动时调用。
+- `@EndActivity`: 通过某个活动限制事件集。例如：`@Observes @EndActivity("shipGoods") BusinessProcessEvent evt` 会在 id 为 "shipGoods" 的活动离开时被调用。
+- `@TakeTransition`: 通过某个转换限制事件集。
+- `@CreateTask`: 通过某个任务的创建来限制事件集。
+- `@DeleteTask`: 通过删除某个任务来限制事件集。
+- `@AssignTask`: 通过特定任务的分配来限制事件集。
+- `@CompleteTask`: 通过特定任务的完成来限制事件集。
+
+上面命名的限定符可以自由组合。例如，为了接收在“shipmentProcess”中离开“shipGoods”活动时生成的所有事件，我们可以编写以下观察者方法：
+
+```java
+public void beforeShippingGoods(@Observes @BusinessProcess("shippingProcess") @EndActivity("shipGoods") BusinessProcessEvent evt) {
+	// handle event
+}
+```
+
+在默认配置中，事件侦听器是在同一事务的上下文中同步调用的。CDI 事务观察器（仅与 JavaEE / EJB 结合使用）允许控制何时将事件传递给观察者方法。例如，使用事务观察者，我们可以确保只有在触发事件的事务成功时才通知观察者：
+
+```java
+public void onShipmentSuceeded(@Observes(during=TransactionPhase.AFTER_SUCCESS) @BusinessProcess("shippingProcess") @EndActivity("shipGoods") BusinessProcessEvent evt) {
+	// send email to customer.
+}
+```
+
+#### 1.10附加的功能
+
+- ProcessEngine 以及可用于注入的服务：`@Inject ProcessEngine、RepositoryService、TaskService`，...
+- 可以注入当前流程实例和任务：`@Inject ProcessInstance, Task`,
+- 可以注入当前的业务key：`@Inject @BusinessKey String businessKey`，
+- 当前注入的流程实例id：`@Inject @ProcessInstanceId String pid`,
+
+### 2.已知限制
+
+尽管 activiti-cdi 是针对 SPI 实现的并设计为“便携式扩展”，但它仅使用 Weld 进行测试。
+
+## LDAP集成
+
+公司通常已经拥有 LDAP 系统形式的用户和组存储。从 5.14 版本开始，Activiti 提供了一个开箱即用的解决方案，用于轻松配置 Activiti 应该如何与 LDAP 系统连接。
+
+在 Activiti 5.14 之前，已经可以将 LDAP 与 Activiti 集成。但是，从 5.14 开始，配置已经简化了很多。但是，配置 LDAP 的旧方法仍然有效。更具体地说，简化的配置只是旧基础设施之上的一个包装器。
+
+### 1.用法
+
+要将 LDAP 集成代码添加到您的项目，只需将以下依赖项添加到您的 pom.xml：
+
+```xml
+<dependency>
+  <groupId>org.activiti</groupId>
+  <artifactId>activiti-ldap</artifactId>
+  <version>latest.version</version>
+</dependency>
+```
+
+### 2.使用案例
+
+LDAP 集成目前有两个主要用例：
+
+- 允许通过 IdentityService 进行身份验证。当通过 IdentityService 做所有事情时，这可能很有用。
+- 获取用户的组。这在例如查询任务以查看某个用户可以看到哪些任务（即具有候选组的任务）时很重要。
+
+### 3.配置
+
+通过在流程引擎配置的 `configurators` 部分中注入 `org.activiti.ldap.LDAPConfigurator` 的实例，可以将 LDAP 系统与 Activiti 集成。这个类是高度可扩展的：如果默认实现不适合用例，方法可以很容易地被覆盖，并且许多依赖 bean 是可插入的。
+
+这是一个示例配置（注意：当然，以编程方式创建引擎时，这是完全相似的）。现在不要担心所有属性，我们将在下一节详细介绍它们。
+
+```xml
+<bean id="processEngineConfiguration" class="...SomeProcessEngineConfigurationClass">
+        ...
+        <property name="configurators">
+          <list>
+              <bean class="org.activiti.ldap.LDAPConfigurator">
+
+                <!-- Server connection params -->
+                <property name="server" value="ldap://localhost" />
+                <property name="port" value="33389" />
+                <property name="user" value="uid=admin, ou=users, o=activiti" />
+                <property name="password" value="pass" />
+
+                <!-- Query params -->
+                <property name="baseDn" value="o=activiti" />
+                <property name="queryUserByUserId" value="(&(objectClass=inetOrgPerson)(uid={0}))" />
+                <property name="queryUserByFullNameLike" value="(&(objectClass=inetOrgPerson)(|({0}=*{1}*)({2}=*{3}*)))" />
+                <property name="queryGroupsForUser" value="(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))" />
+
+                <!-- Attribute config -->
+                <property name="userIdAttribute" value="uid" />
+                <property name="userFirstNameAttribute" value="cn" />
+                <property name="userLastNameAttribute" value="sn" />
+                <property name="userEmailAttribute" value="mail" />
+
+
+                <property name="groupIdAttribute" value="cn" />
+                <property name="groupNameAttribute" value="cn" />
+
+              </bean>
+          </list>
+        </property>
+    </bean>
+```
+
+### 4.属性
+
+可以在 org.activiti.ldap.LDAPConfigurator 上设置以下属性：
+
+```
+.LDAP configuration properties
+```
+
+| Property name              | Description                                                  | Type                                                         | Default value                    |
+| -------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------------- |
+| server                     | 可以访问 LDAP 系统的服务器。例如 ldap://localhost:33389      | String                                                       |                                  |
+| port                       | 运行 LDAP 系统的端口                                         | int                                                          |                                  |
+| user                       | 用于连接到 LDAP 系统的用户 ID                                | String                                                       |                                  |
+| password                   | 用于连接到 LDAP 系统的密码                                   | String                                                       |                                  |
+| initialContextFactory      | 用于连接到 LDAP 系统的 InitialContextFactory 名称            | String                                                       | com.sun.jndi.ldap.LdapCtxFactory |
+| securityAuthentication     | 用于连接到 LDAP 系统的 java.naming.security.authentication 属性的值 | String                                                       | simple                           |
+| customConnectionParameters | 允许设置所有没有专用设置器的 LDAP 连接参数。有关自定义属性，请参见例如 http://docs.oracle.com/javase/tutorial/jndi/ldap/jndi.html。例如，此类属性用于配置连接池、特定安全设置等。创建到 LDAP 系统的连接时，将提供所有提供的参数。 | Map<String, String>                                          |                                  |
+| baseDn                     | 开始搜索用户和组的基本专有名称 (DN)                          | String                                                       |                                  |
+| userBaseDn                 | 从中开始搜索用户的基本专有名称 (DN)。如果未提供，将使用 baseDn（见上文） | String                                                       |                                  |
+| groupBaseDn                | 从中开始搜索组的基本专有名称 (DN)。如果未提供，将使用 baseDn（见上文） | String                                                       |                                  |
+| searchTimeLimit            | 在 LDAP 中进行搜索时使用的超时（以毫秒为单位）               | long                                                         | one hour                         |
+| queryUserByUserId          | 按 userId 搜索用户时执行的查询。例如： (&(objectClass=inetOrgPerson)(uid={0})) 这里将返回 LDAP 中所有类 inetOrgPerson 且具有匹配 uid 属性值的对象。如示例中所示，用户 ID 是使用 {0} 注入的。如果单独设置查询不足以满足您的特定 LDAP 设置，您也可以插入不同的 LDAPQueryBuilder，它允许进行更多定制，而不仅仅是查询。 | String                                                       |                                  |
+| queryUserByFullNameLike    | 按全名搜索用户时执行的查询。例如： (& (objectClass=inetOrgPerson) ( | ({0}={1})({2}={3})) ) 在这里，将返回 LDAP 中具有类 inetOrgPerson 并且具有匹配的名字和姓氏值的所有对象。请注意，{0} 注入 firstNameAttribute（如上定义）、{1} 和 {3} 搜索文本以及 {2} lastNameAttribute。如果单独设置查询不足以满足您的特定 LDAP 设置，您也可以插入不同的 LDAPQueryBuilder，它允许进行更多定制，而不仅仅是查询。 | string                           |
+|                            | queryGroupsForUser                                           | 搜索特定用户的组时执行的查询。例如： (&(objectClass=groupOfUniqueNames)(uniqueMember={0})) 在这里，将返回 LDAP 中所有具有 groupOfUniqueNames 类并且提供的 DN（匹配用户的 DN）是 uniqueMember 的对象。如示例中所示，用户 ID 是通过使用 {0} 注入的。如果单独设置查询不足以满足您的特定 LDAP 设置，您也可以插入不同的 LDAP QueryBuilder，这样可以进行更多自定义，而不仅仅是查询。 | string                           |
+|                            | userIdAttribute                                              | 与用户 ID 匹配的属性名称。该属性用于查找 User 对象并且完成 LDAP 对象和 Activiti User 对象之间的映射。 | string                           |
+|                            | userFirstNameAttribute                                       | 与用户名字匹配的属性的名称。该属性用于查找 User 对象并且完成 LDAP 对象和 Activiti User 对象之间的映射。 | string                           |
+|                            | userLastNameAttribute                                        | 与用户姓氏匹配的属性名称。该属性用于查找 User 对象并且完成 LDAP 对象和 Activiti User 对象之间的映射。 | string                           |
+|                            | groupIdAttribute                                             | 与组 ID 匹配的属性的名称。该属性在查找 Group 对象时使用，并且 LDAP 对象和 Activiti Group 对象之间的映射已完成。 | string                           |
+|                            | groupNameAttribute                                           | 与组名匹配的属性名称。该属性在查找 Group 对象时使用，并且 LDAP 对象和 Activiti Group 对象之间的映射已完成。 | String                           |
+|                            | groupTypeAttribute                                           | 与组类型匹配的属性的名称。该属性在查找 Group 对象时使用，并且 LDAP 对象和 Activiti Group 对象之间的映射已完成。 | String                           |
+
+以下属性是当人们想要自定义默认行为或引入组缓存时：
+
+高级属性
+
+| Property name                | Description                                                  | Type                                              | Default value |
+| ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------- | ------------- |
+| ldapUserManagerFactory       | 如果默认实现不合适，则设置 LDAPUserManagerFactory 的自定义实现。 | instance of LDAPUserManagerFactory                |               |
+| ldapGroupManagerFactory      | 如果默认实现不合适，则设置 LDAPGroupManagerFactory 的自定义实现。 | instance of LDAPGroupManagerFactory               |               |
+| ldapMemberShipManagerFactory | 如果默认实现不合适，则设置 LDAPMembershipManagerFactory 的自定义实现。请注意，这不太可能，因为成员资格通常在 LDAP 系统本身中进行管理。 | An instance of LDAPMembershipManagerFactory       |               |
+| ldapQueryBuilder             | 如果默认实现不合适，请设置自定义查询构建器。当 LDAPUserManager 或 LDAPGroupManage} 对 LDAP 系统进行实际查询时，将使用 LDAPQueryBuilder 实例。默认实现使用在此实例上设置的属性，例如 queryGroupsForUser 和 queryUserById | An instance of org.activiti.ldap.LDAPQueryBuilder |               |
+| groupCacheSize               | 允许设置组缓存的大小。这是一个 LRU 缓存，用于为用户缓存组，从而避免每次需要知道用户组时访问 LDAP 系统。如果该值小于零，则不会实例化缓存。默认设置为 -1，因此不进行缓存。 | int                                               | -1            |
+| groupCacheExpirationTime     | 以毫秒为单位设置组缓存的过期时间。当获取特定用户的组时，如果组缓存存在，则组将在此属性中设置的时间内存储在此缓存中。例.当在 00:00 获取组并且过期时间为 30 分钟时，00:30 之后对该用户的任何组获取都不会来自缓存，而是从 LDAP 系统再次获取。同样，该用户在 00:00 - 00:30 之间完成的所有组提取都将来自缓存。 | long                                              | one hour      |
+
+使用Active Directory时的注意事项：Activiti论坛上有人反馈说对于Activiti Directory，InitialDirContext需要设置为Context.REFERRAL。这可以通过如上所述的 customConnectionParameters 映射传递。
+
+## Advanced
+
+以下部分涵盖了 Activiti 的高级用例，这些用例超出了 BPMN 2.0 流程的典型执行。因此，建议对 Activiti 有一定的熟练程度和经验，以了解此处描述的主题。
+
+### 1.Async Executor
+
+在 Activiti 版本 5（从版本 5.17.0 开始）中，除了现有的作业执行器之外，还添加了 Async 执行器。许多 Activiti 用户和我们的基准测试证明，Async Executor 比旧作业执行器的性能更高。
+
+在 Activiti 6（及更高版本）中，异步执行器是唯一可用的。对于版本 6，异步执行器被完全重构以获得最佳性能和可插拔性（同时仍与现有 API 兼容）。
+
+#### 1.1.Async Executor设计
+
+存在两种类型的作业：计时器（如属于用户任务的边界事件的那些）和async continuations（属于具有 activiti:async="true" 属性的服务任务）。
+
+计时器是最容易解释的：它们以特定的截止日期保存在 ACT_RU_TIMER_JOB 表中。异步执行器中有一个线程会定期检查是否有新的计时器触发（即截止日期在当前时间之前）。发生这种情况时，计时器将被删除，并创建并插入一个异步作业。
+
+在流程实例步骤的执行期间（这意味着在进行某些 API 调用期间），将在数据库中插入一个异步作业。如果当前 Activiti 引擎的异步执行器处于活动状态，则异步作业实际上已经被锁定。这意味着作业条目被插入到 ACT_RU_JOB 表中，并将设置一个锁所有者和一个锁到期时间。成功提交 API 调用时触发的事务侦听器会触发同一引擎的异步执行器来执行作业（因此保证数据在数据库中）。为此，异步执行器有一个（可配置的）线程池，线程将从中执行作业并异步继续进程。如果 Activiti 引擎没有启用 async executor，异步作业会被插入到 ACT_RU_JOB 表中而不会被锁定。
+
+与检查新计时器的线程类似，异步执行器有一个获取新异步作业的线程。这些是存在于表中且未锁定的作业。该线程将为当前的 Activiti 引擎锁定这些作业并将其传递给异步执行器。
+
+执行作业的线程池使用内存队列从中获取作业。当此队列已满（这是可配置的）时，作业将被解锁并重新插入其表中。这样，其他异步执行程序就可以取而代之。
+
+如果作业执行期间发生异常，异步作业将转换为具有截止日期的计时器作业。它将像常规计时器作业一样被拾取并再次成为异步作业，很快就会重试。当一个作业被重试（可配置）次数并继续失败时，该作业被假定为死亡并移至 ACT_RU_DEADLETTER_JOB。*deadletter* 概念广泛用于各种其他系统。管理员现在需要检查失败作业的异常并决定最佳操作方案。
+
+流程定义和流程实例可以暂停。与这些定义或实例相关的挂起作业放在 ACT_RU_SUSPENDED_JOB 表中，以确保获取作业的查询在其 where 子句中具有尽可能少的条件。
+
+对于熟悉 job/async executor 旧实现的人来说，从上面可以清楚地看出一件事：主要目标是让获取查询尽可能简单。在过去（版本 6 之前），所有作业类型/状态都使用一个表，这使得 where 条件很大，因为它可以满足所有用例。这个问题现在已经解决，我们的基准测试证明这种新设计提供了更好的性能并且更具可扩展性。
+
+#### 1.2Async executor配置
+
+异步执行器是一个高度可配置的组件。始终建议查看异步执行器的默认设置并验证它们是否符合您的流程要求。
+
+或者，可以扩展默认实现或使用您自己的实现实现 `org.activiti.engine.impl.asyncexecutor.AsyncExecutor` 接口。
+
+以下属性可通过 setter 在流程引擎配置中使用：
+
+异步执行器配置选项：
+
+| Name                                        | Default value | Description                                                  |
+| ------------------------------------------- | ------------- | ------------------------------------------------------------ |
+| asyncExecutorThreadPoolQueueSize            | 100           | 执行的作业在被获取后，在它们被线程池中的线程实际执行之前放置在其上的队列的大小 |
+| asyncExecutorCorePoolSize                   | 2             | 在线程池中为作业执行而保持活动状态的最小线程数。             |
+| asyncExecutorMaxPoolSize                    | 10            | 在线程池中为作业执行创建的最大线程数。                       |
+| asyncExecutorThreadKeepAliveTime            | 5000          | 用于作业执行的线程在销毁之前必须保持活动状态的时间（以毫秒为单位）。设置 大于 0 会占用资源，但在许多作业执行的情况下，它始终避免创建新线程。如果为 0，线程将在用于作业执行后被销毁。 |
+| asyncExecutorNumberOfRetries                | 3             | 作业在移至*deadletter* 表之前重试的次数。                    |
+| asyncExecutorMaxTimerJobsPerAcquisition     | 1             | 在一次获取查询期间获取的计时器作业数。默认值为 1，因为这降低了乐观锁异常的可能性。较大的值可以更好地执行，但不同引擎之间发生乐观锁异常的机会也变得更大。 |
+| asyncExecutorMaxAsyncJobsDuePerAcquisition  | 1             | 在一次获取查询期间获取的异步作业数。默认值为 1，因为这降低了乐观锁异常的可能性。较大的值可以更好地执行，但不同引擎之间发生乐观锁异常的机会也变得更大。 |
+| asyncExecutorDefaultTimerJobAcquireWaitTime | 10000         | 定时器获取线程等待执行下一个获取查询的时间（以毫秒为单位）。当未找到新的计时器作业或获取的计时器作业少于 asyncExecutorMaxTimerJobsPerAcquisition 中设置的计时器作业时，就会发生这种情况。 |
+| asyncExecutorDefaultAsyncJobAcquireWaitTime | 10000         | 异步作业获取线程等待执行下一个获取查询的时间（以毫秒为单位）。当未找到新的异步作业或获取的异步作业少于 asyncExecutorMaxAsyncJobsDuePerAcquisition 中设置的数量时，就会发生这种情况。 |
+| asyncExecutorDefaultQueueSizeFullWaitTime   | 0             | 当内部作业队列已满以执行下一个查询时，异步作业（定时器和异步延续）获取线程将等待的时间（以毫秒为单位）。默认设置为 0（为了向后兼容）。将此属性设置为更高的值允许异步执行程序希望稍微清除其队列。 |
+| asyncExecutorTimerLockTimeInMillis          | 5 minutes     | 异步执行器获取计时器作业时锁定的时间量（以毫秒为单位）。在这段时间内，没有其他异步执行器会尝试获取和锁定此作业。 |
+| asyncExecutorAsyncJobLockTimeInMillis       | 5 minutes     | 异步作业在被异步执行器获取时被锁定的时间量（以毫秒为单位）在这段时间内，没有其他异步执行器会尝试获取和锁定此作业。。 |
+| asyncExecutorSecondsToWaitOnShutdown        | 60            | 当请求执行程序（或流程引擎）关闭时，等待正常关闭用于作业执行的线程池的时间（以秒为单位）。 |
+| asyncExecutorResetExpiredJobsInterval       | 60 seconds    | 两次连续检查过期作业之间的时间量（以毫秒为单位）。过期作业是被锁定的作业（锁定所有者 + 时间由某个执行者写入，但作业从未完成）。在此类检查期间，过期的作业将再次可用，这意味着锁定所有者和锁定时间将被删除。其他执行者现在可以获得该执行。如果锁定时间在当前日期之前，则认为作业已过期。 |
+| asyncExecutorResetExpiredJobsPageSize       | 3             | 异步执行器的重置过期线程一次获取的作业数量。                 |
+
+#### 1.3基于消息队列的异步执行器
+
+在阅读异步执行器设计部分时，很明显该架构受到消息队列的启发。异步执行器的设计方式是，可以轻松地使用消息队列来接管线程池的作业和异步作业的处理。
+
+基准测试表明，在吞吐量方面，使用消息队列优于线程池支持的异步执行器。然而，它确实带有一个额外的架构组件，这当然会使设置、维护和监控更加复杂。对于许多用户来说，线程池支持的异步执行器的性能绰绰有余。然而，很高兴知道，如果所需的性能增长，还有另一种选择。
+
+目前，唯一支持开箱即用的选项是 JMS 和 Spring。优先支持 Spring 的原因是因为 Spring 有一些非常好的特性，当涉及到线程和处理多个消息消费者时，这些特性减轻了很多痛苦。而且，集成非常简单，可以轻松移植到任何消息队列实现和（或）协议（Stomp、AMPQ 等）。对于下一个因该实现应该是什么，我们期待您的反馈。
+
+当引擎创建一个新的异步作业时，一条消息被放置在包含作业标识符的消息队列中（在事务提交的事务侦听器中，因此我们确定的作业条目在数据库中）。消息使用者然后使用此作业标识符来获取作业并执行作业。异步执行器将不再创建线程池。它将从一个单独的线程插入和查询计时器。当计时器触发时，它被移动到异步作业表，这意味着消息也被发送到消息队列。重置过期线程也将像往常一样解锁作业，因为消息队列也可能失败。现在将重新发送消息，而不是解锁工作。异步执行器将不再轮询异步作业。
+
+实现由两个类组成：
+
+- `org.activiti.engine.impl.asyncexecutor.JobManager` 接口的一个实现，它将消息放入消息队列而不是将其传递到线程池。
+- 使用消息队列中的消息的 `javax.jms.MessageListener` 实现，使用消息中的作业标识符来获取和执行作业。
+
+首先，将 activiti-jms-spring-executor 依赖添加到您的项目中：
+
+```xml
+<dependency>
+  <groupId>org.activiti</groupId>
+  <artifactId>activiti-jms-spring-executor</artifactId>
+  <version>${activiti.version}</version>
+</dependency>
+```
+
+要启用基于消息队列的异步执行器，在流程引擎配置中，需要做以下工作：
+
+- asyncExecutorActivate 必须像之前一样设置为 true
+- asyncExecutorMessageQueueMode 需要设置为 true
+- org.activiti.spring.executor.jms.MessageBasedJobManager 必须作为 JobManager 注入
+
+下面是一个基于 Java 的配置的完整示例，使用 ActiveMQ 作为消息队列代理。
+
+一些注意事项：
+
+- MessageBasedJobManager 需要注入一个配置了正确 connectionFactory 的 JMSTemplate。
+- 我们正在使用 Spring 的 MessageListenerContainer 概念，因为这大大简化了线程和多个消费者。
+
+```java
+@Configuration
+public class SpringJmsConfig {
+
+  @Bean
+  public DataSource dataSource() {
+    // Omitted
+  }
+
+  @Bean(name = "transactionManager")
+  public PlatformTransactionManager transactionManager() {
+    DataSourceTransactionManager transactionManager = new DataSourceTransactionManager();
+    transactionManager.setDataSource(dataSource());
+    return transactionManager;
+  }
+
+  @Bean
+  public SpringProcessEngineConfiguration processEngineConfiguration() {
+    SpringProcessEngineConfiguration configuration = new SpringProcessEngineConfiguration();
+    configuration.setDataSource(dataSource());
+    configuration.setTransactionManager(transactionManager());
+    configuration.setDatabaseSchemaUpdate(SpringProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+    configuration.setAsyncExecutorMessageQueueMode(true);
+    configuration.setAsyncExecutorActivate(true);
+    configuration.setJobManager(jobManager());
+    return configuration;
+  }
+
+  @Bean
+  public ProcessEngine processEngine() {
+    return processEngineConfiguration().buildProcessEngine();
+  }
+
+  @Bean
+  public MessageBasedJobManager jobManager() {
+    MessageBasedJobManager jobManager = new MessageBasedJobManager();
+    jobManager.setJmsTemplate(jmsTemplate());
+    return jobManager;
+  }
+
+  @Bean
+  public ConnectionFactory connectionFactory() {
+      ActiveMQConnectionFactory activeMQConnectionFactory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+      activeMQConnectionFactory.setUseAsyncSend(true);
+      activeMQConnectionFactory.setAlwaysSessionAsync(true);
+      return new CachingConnectionFactory(activeMQConnectionFactory);
+  }
+
+  @Bean
+  public JmsTemplate jmsTemplate() {
+      JmsTemplate jmsTemplate = new JmsTemplate();
+      jmsTemplate.setDefaultDestination(new ActiveMQQueue("activiti-jobs"));
+      jmsTemplate.setConnectionFactory(connectionFactory());
+      return jmsTemplate;
+  }
+
+  @Bean
+  public MessageListenerContainer messageListenerContainer() {
+      DefaultMessageListenerContainer messageListenerContainer = new DefaultMessageListenerContainer();
+      messageListenerContainer.setConnectionFactory(connectionFactory());
+      messageListenerContainer.setDestinationName("activiti-jobs");
+      messageListenerContainer.setMessageListener(jobMessageListener());
+      messageListenerContainer.setConcurrentConsumers(2);
+      messageListenerContainer.start();
+      return messageListenerContainer;
+  }
+
+  @Bean
+  public JobMessageListener jobMessageListener() {
+    JobMessageListener jobMessageListener = new JobMessageListener();
+    jobMessageListener.setProcessEngineConfiguration(processEngineConfiguration());
+    return jobMessageListener;
+  }
+
+}
+```
+
+在上面的代码中，JobMessageListener 和 MessageBasedJobManager 是来自 activiti-jms-spring-executor 模块的唯一类。所有其他代码都来自 Spring。因此，当想要将其移植到其他队列/协议时，必须移植这些类。
+
+### 2.连接到流程解析
+
+一个 BPMN 2.0 xml 需要解析为 Activiti 内部模型才能在 Activiti 引擎上执行。这种解析发生在进程部署期间或在内存中找不到进程时，并且从数据库中获取 xml。
+
+对于这些进程中的每一个，`BpmnParser` 类都会创建一个新的 `BpmnParse` 实例。此实例将用作解析期间完成的所有事情的容器。解析本身非常简单：对于每个 BPMN 2.0 元素，引擎中都有一个匹配的 `org.activiti.engine.parse.BpmnParseHandler` 实例。因此，解析器有一个映射，它基本上将 BPMN 2.0 元素类映射到 `BpmnParseHandler` 的实例。默认情况下，Activiti 有 `BpmnParseHandler` 实例来处理所有支持的元素，并使用它来将执行监听器附加到流程的步骤以创建历史记录。
+
+可以将 ·org.activiti.engine.parse.BpmnParseHandler· 的自定义实例添加到 Activiti 引擎中。例如，一个常见的用例是向某些步骤添加执行监听器，这些步骤将事件触发到某个队列以进行事件处理。历史处理是在 Activiti 内部以这种方式完成的。要添加此类自定义处理程序，需要调整 Activiti 配置：
+
+```xml
+<property name="preBpmnParseHandlers">
+  <list>
+    <bean class="org.activiti.parsing.MyFirstBpmnParseHandler" />
+  </list>
+</property>
+
+<property name="postBpmnParseHandlers">
+  <list>
+    <bean class="org.activiti.parsing.MySecondBpmnParseHandler" />
+    <bean class="org.activiti.parsing.MyThirdBpmnParseHandler" />
+  </list>
+</property>
+```
+
+在 `preBpmnParseHandlers` 属性中配置的 `BpmnParseHandler` 实例列表添加在任何默认处理程序之前。同样，在这些之后添加 `postBpmnParseHandlers`。如果事物的顺序对自定义解析处理程序中包含的逻辑很重要。
+
+`org.activiti.engine.parse.BpmnParseHandler` 是一个简单的接口：
+
+```java
+public interface BpmnParseHandler {
+
+  Collection<Class>? extends BaseElement>> getHandledTypes();
+
+  void parse(BpmnParse bpmnParse, BaseElement element);
+
+}
+```
+
+`getHandledTypes()` 方法返回此解析器处理的所有类型的集合。可能的类型是 `BaseElement` 的子类，由集合的泛型类型指示。您还可以扩展 `AbstractBpmnParseHandler` 类并覆盖 `getHandledType()` 方法，该方法只返回一个类而不是集合。此类还包含许多默认解析处理程序共享的一些辅助方法。当解析器遇到此方法返回的任何类型时，将调用 `BpmnParseHandler` 实例。在下面的示例中，每当遇到 BPMN 2.0 xml 中包含的流程时，它都会执行 `executeParse` 方法中的逻辑（这是一个类型转换的方法，用于替换 `BpmnParseHandler` 接口上的常规解析方法）。
+
+```JAVA
+public class TestBPMNParseHandler extends AbstractBpmnParseHandler<Process> {
+
+  protected Class<? extends BaseElement> getHandledType() {
+    return Process.class;
+  }
+
+  protected void executeParse(BpmnParse bpmnParse, Process element) {
+     ..
+  }
+
+}
+```
+
+**重要说明：**在编写自定义解析处理程序时，不要使用任何用于解析 BPMN 2.0 构造的内部类。这将导致难以发现错误。实现自定义处理程序的安全方法是实现 BpmnParseHandler 接口或扩展内部抽象类 `org.activiti.engine.impl.bpmn.parser.handler.AbstractBpmnParseHandler`。
+
+可以（但不太常见）将负责解析 BPMN 2.0 元素的默认 `BpmnParseHandler` 实例替换为内部 Activiti 模型。这可以通过以下逻辑片段来完成：
+
+```XML
+<property name="customDefaultBpmnParseHandlers">
+  <list>
+    ...
+  </list>
+</property>
+```
+
+例如，一个简单的例子可以是强制所有服务任务异步：
+
+```java
+public class CustomUserTaskBpmnParseHandler extends ServiceTaskParseHandler {
+
+  protected void executeParse(BpmnParse bpmnParse, ServiceTask serviceTask) {
+
+    // Do the regular stuff
+    super.executeParse(bpmnParse, serviceTask);
+
+    // Make always async
+    ActivityImpl activity = findActivity(bpmnParse, serviceTask.getId());
+    activity.setAsync(true);
+  }
+
+}
+```
+
+### 3.用于高并发的 UUID id 生成器
+
+在某些（非常）高并发负载情况下，默认 id 生成器可能会由于无法足够快地获取新的 id 块而导致异常。每个流程引擎都有一个 id 生成器。默认的 id 生成器在数据库中保留了一个 id 块，这样其他引擎就不能使用同一个块中的 id。在引擎运行期间，当默认的 id 生成器注意到 id 块用完时，将启动一个新事务以获取新块。在（非常）有限的用例中，当负载非常高时，这可能会导致问题。对于大多数用例，默认 id 生成器绰绰有余。默认的 `org.activiti.engine.impl.db.DbIdGenerator` 也有一个属性 idBlockSize 可以配置它来设置保留的 id 块的大小并调整 id 获取的行为。
+
+默认 id 生成器的替代方案是 `org.activiti.engine.impl.persistence.StrongUuidGenerator`，它在本地生成唯一的 UUID 并将其用作所有实体的标识符。由于 UUID 是在不需要访问数据库的情况下生成的，因此它可以更好地处理并发性非常高的用例。请注意，性能可能与默认 id 生成器（正负）不同，具体取决于机器。
+
+UUID生成器可以在activiti配置中配置如下：
+
+```java
+<property name="idGenerator">
+    <bean class="org.activiti.engine.impl.persistence.StrongUuidGenerator" />
+</property>
+```
+
+UUID id 生成器的使用取决于以下额外的依赖：
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.uuid</groupId>
+    <artifactId>java-uuid-generator</artifactId>
+    <version>3.1.3</version>
+</dependency>
+```
+
+### 4.多租户
+
+多租户一般是一个概念，其中软件能够为多个不同的组织提供服务。关键是数据是分区的，没有组织可以看到其他组织的数据。在这种情况下，这样的组织（或部门、团队或……）被称为租户。
+
+请注意，这与多实例设置有根本的不同，在多实例设置中，Activiti Process Engine 实例为每个组织单独运行（并且具有不同的数据库模式）。尽管 Activiti 是轻量级的，并且运行 Process Engine 实例不会占用太多资源，但它确实增加了复杂性和更多的维护。但是，对于某些用例，它可能是正确的解决方案。
+
+Activiti 中的多租户主要是围绕对数据进行分区来实现的。需要注意的是，Activiti 不强制执行多租户规则。这意味着它在查询和使用数据时不会验证执行操作的用户是否属于正确的租户。这应该在调用 Activiti 引擎的层中完成。Activiti 确实确保在检索过程数据时可以存储和使用租户信息。
+
+将流程定义部署到 Activiti Process Engine 时，可以传递租户标识符。这是一个字符串（例如 UUID、部门 ID 等），限制为 256 个字符，用于唯一标识租户：
+
+```java
+repositoryService.createDeployment()
+            .addClassPathResource(...)
+            .tenantId("myTenantId")
+            .deploy();
+```
+
+在部署期间传递租户 ID 具有以下含义：
+
+- 部署中包含的所有流程定义都从该部署继承租户标识符。
+- 从这些流程定义启动的所有流程实例都从流程定义继承此租户标识符。
+- 在执行流程实例时在运行时创建的所有任务都从流程实例继承此租户标识符。独立任务也可以有租户标识符。
+- 在流程实例执行期间创建的所有执行都从流程实例继承此租户标识符。
+- 可以在提供租户标识符的同时触发信号抛出事件（在进程本身或通过 API）。信号只会在租户上下文中执行：即，如果有多个具有相同名称的信号捕获事件，则只会实际调用具有正确租户标识符的事件。
+- 所有作业（计时器和异步延续）都从流程定义（例如计时器启动事件）或流程实例（在运行时创建作业时，例如异步延续）继承租户标识符。这可能用于在自定义作业执行程序中为某些租户提供优先级。
+- 所有历史实体（历史流程实例、任务和活动）从它们的运行时对应物继承租户标识符。
+- 作为旁注，模型也可以有一个租户标识符（模型被 Activiti Modeler 用来存储 BPMN 2.0 模型）。
+
+为了在流程数据上实际使用租户标识符，所有查询 API 都具有对租户进行过滤的能力。例如（并且可以替换为其他实体的相关查询实现）：
+
+```java
+runtimeService.createProcessInstanceQuery()
+    .processInstanceTenantId("myTenantId")
+    .processDefinitionKey("myProcessDefinitionKey")
+    .variableValueEquals("myVar", "someValue")
+    .list()
+```
+
+查询 API 还允许过滤具有相似语义的租户标识符，并过滤掉没有租户 ID 的实体。
+
+**重要的实现细节：**由于数据库怪癖（更具体地说：唯一约束中的空处理），指示没有租户的默认租户标识符值是空字符串。（流程定义键、流程定义版本、租户标识符）的组合需要是唯一的（并且有一个数据库约束检查这一点）。另请注意，不应将租户标识符设置为空，因为这会影响查询，因为某些数据库 (Oracle) 将空字符串视为空值（这就是查询 .withoutTenantId 对空字符串或空值进行检查的原因） 。这意味着可以为多个租户部署相同的流程定义（具有相同的流程定义键），每个租户都有自己的版本控制。不使用租约时，这不影响使用。
+
+请注意，以上所有内容与在集群中运行多个 Activiti 实例并不冲突。
+
+[Experimental] 可以通过调用repositoryService 上的changeDeploymentTenantId(String deploymentId, String newTenantId) 方法来更改租户标识符。这将更改之前继承的租户标识符。这在从非多租户设置转为多租户配置时非常有用。有关更多详细信息，请参阅有关该方法的 Javadoc。
+
+### 5.执行自定义 SQL
+
+Activiti API 允许使用高级 API 与数据库交互。例如，对于检索数据，Query API 和 Native Query API 的使用非常强大。但是，对于某些用例，它们可能不够灵活。以下部分描述了如何针对 Activiti 数据存储执行完全自定义的 SQL 语句（查询、插入、更新和删除是可能的），但完全在配置的流程引擎中执行（例如利用事务设置）。
+
+为了定义自定义 SQL 语句，Activiti 引擎利用了其底层框架 MyBatis 的功能。更多信息可以在 MyBatis 用户指南中阅读。
+
+#### 5.1基于注释的映射SQL语句
+
+使用基于注解的映射语句时要做的第一件事是创建一个 MyBatis 映射器类。例如，假设对于某些用例，不需要整个任务数据，而只需要其中的一小部分。可以执行此操作的 Mapper 如下所示：
+
+```java
+public interface MyTestMapper {
+
+    @Select("SELECT ID_ as id, NAME_ as name, CREATE_TIME_ as createTime FROM ACT_RU_TASK")
+    List<Map<String, Object>> selectTasks();
+
+}
+```
+
+此映射器必须提供给流程引擎配置，如下所示：
+
+```java
+...
+<property name="customMybatisMappers">
+  <set>
+    <value>org.activiti.standalone.cfg.MyTestMapper</value>
+  </set>
+</property>
+...
+```
+
+请注意，这是一个接口。底层的 MyBatis 框架将创建一个可以在运行时使用的实例。另请注意，该方法的返回值不是类型化的，而是映射列表（对应于具有列值的行列表）。如果需要，可以使用 MyBatis 映射器进行输入。
+
+要执行上面的查询，必须使用 managementService.executeCustomSql 方法。此方法接受一个 CustomSqlExecution 实例。这是一个包装器，用于隐藏引擎的内部位，否则需要使其工作。
+
+不幸的是，Java 泛型使它的可读性比它本来的要差一些。下面的两个泛型类型是映射器类和返回类型类。但是，实际的逻辑只是调用映射器方法并返回其结果（如果适用）。
+
+```java
+CustomSqlExecution<MyTestMapper, List<Map<String, Object>>> customSqlExecution =
+          new AbstractCustomSqlExecution<MyTestMapper, List<Map<String, Object>>>(MyTestMapper.class) {
+
+  public List<Map<String, Object>> execute(MyTestMapper customMapper) {
+    return customMapper.selectTasks();
+  }
+
+};
+
+List<Map<String, Object>> results = managementService.executeCustomSql(customSqlExecution);
+```
+
+在这种情况下，上面列表中的 Map 条目将仅包含 id、名称和创建时间，而不是完整的任务对象。 使用上述方法时，任何 SQL 都是可能的。另一个更复杂的例子：
+
+```java
+@Select({
+        "SELECT task.ID_ as taskId, variable.LONG_ as variableValue FROM ACT_RU_VARIABLE variable",
+        "inner join ACT_RU_TASK task on variable.TASK_ID_ = task.ID_",
+        "where variable.NAME_ = #{variableName}"
+    })
+    List<Map<String, Object>> selectTaskWithSpecificVariable(String variableName);
+```
+
+使用这种方法，任务表将与变量表连接。只保留变量有一定名字的地方，返回任务id和对应的数值。
+
+有关使用基于注释的映射语句的工作示例，请检查单元测试 org.activiti.standalone.cfg.CustomMybatisMapperTest 以及文件夹 src/test/java/org/activiti/standalone/cfg/ 和 src/test/resources 中的其他类和资源/org/activiti/standalone/cfg/
+
+#### 5.2基于 XML 的映射语句
+
+使用基于 XML 的映射语句时，语句在 XML 文件中定义。对于不需要整个任务数据，而只需要其中一小部分的用例。 XML 文件如下所示：
+
+```xml
+<mapper namespace="org.activiti.standalone.cfg.TaskMapper">
+
+  <resultMap id="customTaskResultMap" type="org.activiti.standalone.cfg.CustomTask">
+    <id property="id" column="ID_" jdbcType="VARCHAR"/>
+    <result property="name" column="NAME_" jdbcType="VARCHAR"/>
+    <result property="createTime" column="CREATE_TIME_" jdbcType="TIMESTAMP" />
+  </resultMap>
+
+  <select id="selectCustomTaskList" resultMap="customTaskResultMap">
+    select RES.ID_, RES.NAME_, RES.CREATE_TIME_ from ACT_RU_TASK RES
+  </select>
+
+</mapper>
+```
+
+结果映射到 org.activiti.standalone.cfg.CustomTask 类的实例，如下所示：
+
+```java
+public class CustomTask {
+
+  protected String id;
+  protected String name;
+  protected Date createTime;
+
+  public String getId() {
+    return id;
+  }
+  public String getName() {
+    return name;
+  }
+  public Date getCreateTime() {
+    return createTime;
+  }
+}
+```
+
+映射器 XML 文件必须提供给流程引擎配置，如下所示：
+
+```xml
+...
+<property name="customMybatisXMLMappers">
+  <set>
+    <value>org/activiti/standalone/cfg/custom-mappers/CustomTaskMapper.xml</value>
+  </set>
+</property>
+...
+```
+
+该语句可以按如下方式执行：
+
+```java
+List<CustomTask> tasks = managementService.executeCommand(new Command<List<CustomTask>>() {
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public List<CustomTask> execute(CommandContext commandContext) {
+        return (List<CustomTask>) commandContext.getDbSqlSession().selectList("selectCustomTaskList");
+      }
+    });
+```
+
+对于需要更复杂语句的用例，XML Mapped Statements 可能会有所帮助。由于 Activiti 在内部使用 XML Mapped Statements，因此可以利用底层功能。
+
+假设对于某些用例，需要根据 id、name、type、userId 等查询条件数据的能力！为了实现用例，可以按如下方式创建扩展 org.activiti.engine.impl.AbstractQuery 的查询类 AttachmentQuery：
+
+```java
+public class AttachmentQuery extends AbstractQuery<AttachmentQuery, Attachment> {
+
+  protected String attachmentId;
+  protected String attachmentName;
+  protected String attachmentType;
+  protected String userId;
+
+  public AttachmentQuery(ManagementService managementService) {
+    super(managementService);
+  }
+
+  public AttachmentQuery attachmentId(String attachmentId){
+    this.attachmentId = attachmentId;
+    return this;
+  }
+
+  public AttachmentQuery attachmentName(String attachmentName){
+    this.attachmentName = attachmentName;
+    return this;
+  }
+
+  public AttachmentQuery attachmentType(String attachmentType){
+    this.attachmentType = attachmentType;
+    return this;
+  }
+
+  public AttachmentQuery userId(String userId){
+    this.userId = userId;
+    return this;
+  }
+
+  @Override
+  public long executeCount(CommandContext commandContext) {
+    return (Long) commandContext.getDbSqlSession()
+                   .selectOne("selectAttachmentCountByQueryCriteria", this);
+  }
+
+  @Override
+  public List<Attachment> executeList(CommandContext commandContext, Page page) {
+    return commandContext.getDbSqlSession()
+            .selectList("selectAttachmentByQueryCriteria", this);
+  }
+```
+
+请注意，在扩展 AbstractQuery 扩展类时，应将 ManagementService 的实例传递给超级构造函数，并且需要实现方法 executeCount 和 executeList 以调用映射语句。
+
+包含映射语句的 XML 文件如下所示：
+
+```xml
+<mapper namespace="org.activiti.standalone.cfg.AttachmentMapper">
+
+  <select id="selectAttachmentCountByQueryCriteria" parameterType="org.activiti.standalone.cfg.AttachmentQuery" resultType="long">
+    select count(distinct RES.ID_)
+    <include refid="selectAttachmentByQueryCriteriaSql"/>
+  </select>
+
+  <select id="selectAttachmentByQueryCriteria" parameterType="org.activiti.standalone.cfg.AttachmentQuery" resultMap="org.activiti.engine.impl.persistence.entity.AttachmentEntity.attachmentResultMap">
+    ${limitBefore}
+    select distinct RES.* ${limitBetween}
+    <include refid="selectAttachmentByQueryCriteriaSql"/>
+    ${orderBy}
+    ${limitAfter}
+  </select>
+
+  <sql id="selectAttachmentByQueryCriteriaSql">
+  from ${prefix}ACT_HI_ATTACHMENT RES
+  <where>
+   <if test="attachmentId != null">
+     RES.ID_ = #{attachmentId}
+   </if>
+   <if test="attachmentName != null">
+     and RES.NAME_ = #{attachmentName}
+   </if>
+   <if test="attachmentType != null">
+     and RES.TYPE_ = #{attachmentType}
+   </if>
+   <if test="userId != null">
+     and RES.USER_ID_ = #{userId}
+   </if>
+  </where>
+  </sql>
+</mapper>
+```
+
+分页、排序、表名前缀等功能都可用，并可在语句中使用（因为 parameterType 是 AbstractQuery 的子类）。请注意，要映射结果，可以使用预定义的 org.activiti.engine.impl.persistence.entity.AttachmentEntity.attachmentResultMap resultMap。
+
+最后，可以按如下方式使用 AttachmentQuery：
+
+```java
+....
+// Get the total number of attachments
+long count = new AttachmentQuery(managementService).count();
+
+// Get attachment with id 10025
+Attachment attachment = new AttachmentQuery(managementService).attachmentId("10025").singleResult();
+
+// Get first 10 attachments
+List<Attachment> attachments = new AttachmentQuery(managementService).listPage(0, 10);
+
+// Get all attachments uploaded by user kermit
+attachments = new AttachmentQuery(managementService).userId("kermit").list();
+....
+```
+
+有关使用 XML 映射语句的工作示例，请检查单元测试 org.activiti.standalone.cfg.CustomMybatisXMLMapperTest 以及文件夹 src/test/java/org/activiti/standalone/cfg/ 和 src/test/resources/org/activiti/standalone/cfg/
+
+### 6.使用 ProcessEngineConfigurator 的高级流程引擎配置
+
+挂钩流程引擎配置的一种高级方法是使用 ProcessEngineConfigurator。这个想法是创建 org.activiti.engine.cfg.ProcessEngineConfigurator 接口的实现并将其注入流程引擎配置：
+
+```xml
+<bean id="processEngineConfiguration" class="...SomeProcessEngineConfigurationClass">
+
+    ...
+
+    <property name="configurators">
+        <list>
+            <bean class="com.mycompany.MyConfigurator">
+                ...
+            </bean>
+        </list>
+    </property>
+
+    ...
+
+</bean>
+```
+
+实现这个接口需要两种方法。 configure 方法，它获取 ProcessEngineConfiguration 实例作为参数。可以通过这种方式添加自定义配置，并且该方法将保证在创建流程引擎之前调用，但在所有默认配置完成之后。另一种方法是 getPriority 方法，它允许在某些配置器相互依赖的情况下对配置器进行排序。
+
+此类配置器的一个示例是 LDAP 集成，其中配置器用于将默认用户和组管理器类替换为能够处理 LDAP 用户存储的类。因此，基本上配置器允许对流程引擎进行大量更改或调整，并且适用于非常高级的用例。另一个例子是用自定义版本交换流程定义缓存：
+
+```java
+public class ProcessDefinitionCacheConfigurator extends AbstractProcessEngineConfigurator {
+
+    public void configure(ProcessEngineConfigurationImpl processEngineConfiguration) {
+            MyCache myCache = new MyCache();
+            processEngineConfiguration.setProcessDefinitionCache(enterpriseProcessDefinitionCache);
+    }
+
+}
+```
+
+还可以使用 ServiceLoader 方法从类路径中自动发现流程引擎配置器。这意味着必须将具有配置器实现的 jar 放在类路径上，在该 jar 的 META-INF/services 文件夹中包含一个名为 org.activiti.engine.cfg.ProcessEngineConfigurator 的文件。该文件的内容需要是自定义实现的完全限定类名。当流程引擎启动时，日志将显示找到这些配置器：
+
+```
+INFO  org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl  - Found 1 auto-discoverable Process Engine Configurators
+INFO  org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl  - Found 1 Process Engine Configurators in total:
+INFO  org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl  - class org.activiti.MyCustomConfigurator
+```
+
+请注意，这种 ServiceLoader 方法在某些环境中可能不起作用。可以使用 ProcessEngineConfiguration 的 enableConfiguratorServiceLoader 属性（默认为 true）显式禁用它。
+
+### 7.高级查询API：运行时查询和历史任务查询无缝切换
+
+任何 BPM 用户界面的一个核心组件是任务列表。通常，最终用户处理开放的运行时任务，使用各种设置过滤他们的收件箱。通常，历史任务也需要显示在这些列表中，并进行类似的过滤。为了使代码更容易，TaskQuery 和 HistoricTaskInstanceQuery 都有一个共享的父接口，其中包含所有常见操作（并且大多数操作都是常见的）。
+
+这个通用接口是 org.activiti.engine.task.TaskInfoQuery 类。org.activiti.engine.task.Task 和 org.activiti.engine.task.HistoricTaskInstance 都有一个共同的超类 org.activiti.engine.task.TaskInfo（具有共同的属性），它是从 e.g. 返回的。 list() 方法。然而，Java 泛型有时弊大于利：如果你想直接使用 TaskInfoQuery 类型，它看起来像这样：
+
+```java
+TaskInfoQuery<? extends TaskInfoQuery<?,?>, ? extends TaskInfo> taskInfoQuery
+```
+
+嗯，没错。为了解决这个问题，可以使用 org.activiti.engine.task.TaskInfoQueryWrapper 类来避免泛型（以下代码可能来自返回任务列表的 REST 代码，用户可以在其中切换打开和已完成的任务）：
+
+```java
+TaskInfoQueryWrapper taskInfoQueryWrapper = null;
+if (runtimeQuery) {
+	taskInfoQueryWrapper = new TaskInfoQueryWrapper(taskService.createTaskQuery());
+} else {
+	taskInfoQueryWrapper = new TaskInfoQueryWrapper(historyService.createHistoricTaskInstanceQuery());
+}
+
+List<? extends TaskInfo> taskInfos = taskInfoQueryWrapper.getTaskInfoQuery().or()
+	.taskNameLike("%k1%")
+	.taskDueAfter(new Date(now.getTime() + (3 * 24L * 60L * 60L * 1000L)))
+.endOr()
+.list();
+```
+
+### 8.通过覆写标准 SessionFactory 自定义身份管理
+
+如果您不想像在 LDAP 集成中那样使用完整的 ProcessEngineConfigurator 实现，但仍想插入您的自定义身份管理框架，那么您还可以直接在 ProcessEngineConfiguration 中覆盖 SessionFactory 类。在 Spring 中，这可以通过将以下内容添加到 ProcessEngineConfiguration bean 定义中来轻松完成：
+
+```java
+<bean id="processEngineConfiguration" class="...SomeProcessEngineConfigurationClass">
+
+    ...
+
+    <property name="customSessionFactories">
+        <list>
+            <bean class="com.mycompany.MyGroupManagerFactory"/>
+            <bean class="com.mycompany.MyUserManagerFactory"/>
+        </list>
+    </property>
+
+    ...
+
+</bean>
+```
+
+MyGroupManagerFactory 和 MyUserManagerFactory 需要实现 org.activiti.engine.impl.interceptor.SessionFactory 接口。对 openSession() 的调用返回进行实际身份管理的自定义类实现。对于组，这是一个继承自 org.activiti.engine.impl.persistence.entity.GroupEntityManager 的类，对于管理用户，它必须继承自 org.activiti.engine.impl.persistence.entity.UserEntityManager。以下代码示例包含组的自定义管理器工厂：
+
+```java
+package com.mycompany;
+
+import org.activiti.engine.impl.interceptor.Session;
+import org.activiti.engine.impl.interceptor.SessionFactory;
+import org.activiti.engine.impl.persistence.entity.GroupIdentityManager;
+
+public class MyGroupManagerFactory implements SessionFactory {
+
+	@Override
+	public Class<?> getSessionType() {
+		return GroupIdentityManager.class;
+	}
+
+	@Override
+	public Session openSession() {
+		return new MyCompanyGroupManager();
+	}
+
+}
+```
+
+由工厂创建的 MyCompanyGroupManager 正在执行实际工作。不过，您不需要覆盖 GroupEntityManager 的所有成员，只需覆盖您的用例所需的成员。以下示例提供了这可能是什么样子的指示（仅显示了部分成员）：
+
+```java
+public class MyCompanyGroupManager extends GroupEntityManager {
+
+    private static Logger log = LoggerFactory.getLogger(MyCompanyGroupManager.class);
+
+    @Override
+    public List<Group> findGroupsByUser(String userId) {
+        log.debug("findGroupByUser called with userId: " + userId);
+        return super.findGroupsByUser(userId);
+    }
+
+    @Override
+    public List<Group> findGroupByQueryCriteria(GroupQueryImpl query, Page page) {
+        log.debug("findGroupByQueryCriteria called, query: " + query + " page: " + page);
+        return super.findGroupByQueryCriteria(query, page);
+    }
+
+    @Override
+    public long findGroupCountByQueryCriteria(GroupQueryImpl query) {
+        log.debug("findGroupCountByQueryCriteria called, query: " + query);
+        return super.findGroupCountByQueryCriteria(query);
+    }
+
+    @Override
+    public Group createNewGroup(String groupId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteGroup(String groupId) {
+        throw new UnsupportedOperationException();
+    }
+}
+```
+
+在适当的方法中添加您自己的实现以插入您自己的身份管理解决方案。您必须弄清楚必须覆盖基类的哪个成员。例如下面的调用：
+
+```java
+long potentialOwners = identityService.createUserQuery().memberOfGroup("management").count();
+```
+
+导致调用 UserIdentityManager 接口的以下成员：
+
+```java
+List<User> findUserByQueryCriteria(UserQueryImpl query, Page page);
+```
+
+LDAP 集成的代码包含如何实现这一点的完整示例。查看 Github 上的代码，特别是以下类 LDAPGroupManager 和 LDAPUserManager。
+
+### 9.启用安全的 BPMN 2.0 xml
+
+在大多数情况下，正在部署到 Activiti 引擎的 BPMN 2.0 流程受到严格控制，例如开发团队。但是，在某些用例中，可能需要将任意 BPMN 2.0 xml 上传到引擎。在这种情况下，考虑到恶意用户可能会按照此处所述关闭服务器。
+
+为避免上述链接中描述的攻击，可以在流程引擎配置上设置属性 enableSafeBpmnXml：
+
+```xml
+<property name="enableSafeBpmnXml" value="true"/>
+```
+
+默认情况下，此功能是禁用的！这样做的原因是它依赖于 StaxSource 类的可用性。不幸的是，在某些平台（例如 JDK 6、JBoss 等）上，此类不可用（由于较旧的 xml 解析器实现），因此无法启用安全的 BPMN 2.0 xml 功能。
+
+如果 Activiti 运行的平台确实支持它，请启用此功能。
+
+### 10.事件日志记录（实验性）
+
+从 Activiti 5.16 版开始，引入了（实验性）事件日志记录机制。日志机制建立在 Activiti 引擎的通用事件机制之上，默认情况下是禁用的。这个想法是捕获源自引擎的事件，并创建一个包含所有事件数据（以及更多）的映射并将其提供给 org.activiti.engine.impl.event.logger.EventFlusher，它将刷新这些数据到别处。默认情况下，使用简单的数据库支持的事件处理程序/刷新器，它使用 Jackson 将所述映射序列化为 JSON，并将其作为 EventLogEntryEntity 实例存储在数据库中。此数据库日志记录所需的表是默认创建的（称为 ACT_EVT_LOG）。如果未使用事件日志记录，则可以删除此表。
+
+要启用数据库记录器：
+
+```java
+processEngineConfiguration.setEnableDatabaseEventLogging(true);
+```
+
+或在运行时：
+
+```java
+databaseEventLogger = new EventLogger(processEngineConfiguration.getClock());
+runtimeService.addEventListener(databaseEventLogger);
+```
+
+EventLogger 类可以被子类化。特别是，如果不需要默认的数据库日志记录，createEventFlusher() 方法需要返回 org.activiti.engine.impl.event.logger.EventFlusher 接口的实例。managementService.getEventLogEntries(startLogNr, size);可用于通过 Activiti 检索 EventLogEntryEntity 实例。
+
+很容易看出现在如何使用这些表数据将 JSON 输入到大数据 NoSQL 存储中，例如 MongoDB、Elastic Search 等。也很容易看出这里使用的类（org.activiti.engine. impl.event.logger.EventLogger/EventFlusher 和许多 EventHandler 类）是可扩展摒弃，可以根据您自己的用例进行调整（例如，不将 JSON 存储在数据库中，而是将其直接触发到队列或大数据存储中）。
+
+请注意，此事件日志记录机制是 Activiti 传统历史记录管理器的补充。
+
+尽管所有数据都在数据库表中，但它并未针对查询或轻松检索进行优化。真正的用例是审计跟踪并将其输入大数据存储。
+
+### 11.禁用批量插入
+
+默认情况下，引擎会将同一数据库表的多个插入语句组合在一起进行批量插入，从而提高性能。这已经针对所有支持的数据库进行了测试和实施。
+
+但是，它可能是受支持和测试的数据库的特定版本不允许批量插入（例如，我们有针对 z/OS 上的 DB2 的报告，尽管 DB2 在一般情况下可以工作），可以在流程引擎上禁用批量插入配置：
+
+```xml
+<property name="bulkInsertEnabled" value="false" />
+```
+
+### 12.脚本安全
+
+实验性：安全脚本功能已作为 Activiti 5.21 版本的一部分添加。
+
+默认情况下，在使用脚本任务时，执行的脚本具有与 Java 委托类似的功能。它可以完全访问 JVM，可以永远运行（无限循环）或使用大量内存。但是，Java 委托需要编写并放在 jar 中的类路径上，并且它们与流程定义具有不同的生命周期。最终用户通常不会编写 Java 委托，因为这是开发人员的工作。
+
+另一方面，脚本是流程定义的一部分，其生命周期是相同的。脚本任务不需要 jar 部署的额外步骤，但可以从流程定义部署的那一刻开始执行。有时，脚本任务的脚本不是由开发人员编写的。然而，这带来了如上所述的问题：脚本具有对 JVM 的完全访问权限，并且在执行脚本时可能会阻塞许多系统资源。因此，允许来自任何人的脚本并不是一个好主意。
+
+为了解决这个问题，可以启用安全脚本功能。目前，此功能仅针对 javascript 脚本实现。要启用它，请将 activiti-secure-javascript 依赖项添加到您的项目中。使用 Maven 时：
+
+```xml
+<dependency>
+    <groupId>org.activiti</groupId>
+    <artifactId>activiti-secure-javascript</artifactId>
+    <version>${activiti.version}</version>
+</dependency>
+```
+
+添加此依赖项将传递性地引入 Rhino 依赖项（请参阅 https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino）。Rhino 是 JDK 的 javascript 引擎。它曾经包含在 JDK 版本 6 和 7 中，并被 Nashorn 引擎取代。但是，Rhino 项目在被包含在 JDK 中后继续开发。许多功能（包括 Activiti 用于实现安全脚本的功能）是后来添加的。在撰写本文时，Nashorn 引擎不具备实现安全脚本功能所需的功能。
+
+这确实意味着脚本之间可能存在（通常很小）差异（例如，importPackage 在 Rhino 上工作，但 load() 必须在 Nashorn 上使用）。这些更改类似于从 JDK 7 切换到 8 。
+
+配置安全脚本是通过专用的 Configurator 对象完成的，该对象在流程引擎实例化之前传递给流程引擎配置：
+
+```java
+SecureJavascriptConfigurator configurator = new SecureJavascriptConfigurator()
+  .setWhiteListedClasses(new HashSet<String>(Arrays.asList("java.util.ArrayList")))
+  .setMaxStackDepth(10)
+  .setMaxScriptExecutionTime(3000L)
+  .setMaxMemoryUsed(3145728L)
+  .setNrOfInstructionsBeforeStateCheckCallback(10);
+
+processEngineConfig.addConfigurator(configurator);
+```
+
+可以进行以下设置：
+
+- **enableClassWhiteListing**: 当为 true 时，所有类都将被列入黑名单，所有要使用的类都需要单独列入白名单。这可以严格控制暴露给脚本的内容。默认为假。
+- **whiteListedClasses**:与允许在脚本中使用的类的完全限定类名相对应的一组字符串。例如，要在脚本中公开执行对象，需要将 org.activiti.engine.impl.persistence.entity.ExecutionEntityImpl String 添加到此 Set 集合中。默认为空。
+- **maxStackDepth**: 在脚本中调用函数时限制堆栈大小。这可用于避免递归调用脚本中定义的方法时发生的 stackoverflow 异常。默认情况下 -1（禁用）。
+- **maxScriptExecutionTime**: 允许脚本运行的最长时间。默认情况下 -1（禁用）。
+- **maxMemoryUsed**: 允许脚本使用的最大内存（以字节为单位）。请注意，脚本引擎本身需要一些内存占用，这里也已经计算在内。默认情况下 -1（禁用）。
+- **nrOfInstructionsBeforeStateCheckCallback**: 最大脚本执行时间和内存使用实现回调，该回调在脚本的每 x 条指令调用一次。注意，这些不是脚本指令，而是 java 字节码指令（这意味着一个脚本行可能是数百个字节码指令）。默认为 100。
+
+注意：maxMemoryUsed 设置只能由支持 com.sun.management.ThreadMXBean#getThreadAllocatedBytes() 方法的 JVM 使用。 Oracle JDK 支持此项功能。
+
+还有一个 ScriptExecutionListener 和 ScriptTaskListener 的安全变体：org.activiti.scripting.secure.listener.SecureJavascriptExecutionListener 和 org.activiti.scripting.secure.listener.SecureJavascriptTaskListener。
+
+它的用法如下：
+
+```xml
+<activiti:executionListener event="start" class="org.activiti.scripting.secure.listener.SecureJavascriptExecutionListener">
+  <activiti:field name="script">
+	  <activiti:string>
+		  <![CDATA[
+        execution.setVariable('test');
+			]]>
+	  </activiti:string>
+	</activiti:field>
+  <activiti:field name="language" stringValue="javascript" />
+</activiti:executionListener>
+```
+
+有关演示不安全脚本以及如何通过安全脚本功能使其安全的示例，请查看 Github 上的[单元测试](https://github.com/Activiti/Activiti/tree/master/modules/activiti-secure-javascript/src/test/resources)
+
+## Tooling
+
+### 1.JMX
+
+#### 1.1介绍
+
+可以使用标准 Java 管理扩展 (JMX) 技术连接到 Activiti 引擎，以获取信息或更改其行为。任何标准 JMX 客户端都可以用于此目的。启用和禁用 Job Executor、部署新的流程定义文件和删除它们只是使用 JMX 无需编写任何代码即可完成的示例。
+
+#### 1.2快速开始
+
+默认情况下未启用 JMX。要在其默认配置中启用 JMX，只需使用 Maven 或任何其他方式将 activiti-jmx jar 文件添加到您的Classpath中即可。如果您使用 Maven，您可以通过在 pom.xml 中添加以下依赖：
+
+```xml
+<dependency>
+  <groupId>org.activiti</groupId>
+  <artifactId>activiti-jmx</artifactId>
+  <version>latest.version</version>
+</dependency>
+```
+
+添加依赖并构建流程引擎后，即可使用 JMX 连接。只需运行标准 JDK 发行版中提供的 jconsole。在本地进程列表中，您将看到包含 Activiti 的 JVM。如果出于任何原因，“本地进程”部分中未列出正确的 JVM，请尝试使用“远程进程”部分中的此 URL 连接到它：
+
+```
+service:jmx:rmi:///jndi/rmi://localhost:1099/jmxrmi/activiti
+```
+
+您可以在日志文件中找到本地 URL。连接后，您可以看到标准的 JVM 统计信息和 MBean。您可以通过选择 MBeans 选项卡并在右侧面板上选择“org.activiti.jmx.Mbeans”来查看 Activiti 特定的 MBean。通过选择任何 MBean，您可以查询信息或更改配置。此快照显示了 jconsole 的样子：
+
+任何不限于 jconsole 的 JMX 客户端都可以用于访问 MBean。大多数数据中心监控工具都有一些连接器，使它们能够连接到 JMX MBean。
+
+#### 1.3.属性和操作
+
+这是目前可用的属性和操作列表。此列表可能会根据需要在未来版本中扩展。
+
+| MBean                   | Type      | Name                                                         | Description                                                  |
+| ----------------------- | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ProcessDefinitionsMBean | Attribute | processDefinitions                                           | 已部署流程定义的 `Id`、`Name`、`Version`、`IsSuspended` 属性作为字符串列表 |
+|                         | Attribute | deployments                                                  | 当前部署的 `Id`、`Name`、`TenantId` 属性                     |
+|                         | method    | getProcessDefinitionById(String id)                          | 具有给定 id 的流程定义的 `Id`、`Name`、`Version` 和 `IsSuspended `属性 |
+|                         | method    | deleteDeployment(String id)                                  | 删除具有给定 `ID` 的部署                                     |
+|                         | method    | suspendProcessDefinitionById(String id)                      | 使用给定的 `Id` 暂停流程定义                                 |
+|                         | method    | activatedProcessDefinitionById(String id)                    | 使用给定的 `Id` 激活流程定义                                 |
+|                         | method    | suspendProcessDefinitionByKey(String id)                     | 使用给定的`key`挂起流程定义                                  |
+|                         | method    | activatedProcessDefinitionByKey(String id)                   | 使用给定的使用给定的`key`激活流程定义                        |
+|                         | method    | deployProcessDefinition(String resourceName, String processDefinitionFile) | 部署流程定义文件                                             |
+| JobExecutorMBean        | attribute | isJobExecutorActivated                                       | 如果作业执行程序被激活，则返回 true，否则返回 false          |
+|                         | method    | setJobExecutorActivate(Boolean active)                       | 根据给定的布尔值激活和停用作业执行程序                       |
+
+#### 1.4.配置
+
+JMX 使用默认配置，以便使用最常用的配置轻松部署。但是，更改默认配置很容易。您可以通过编程方式或通过配置文件来完成。以下代码摘录显示了如何在配置文件中完成此操作：
+
+```xml
+<bean id="processEngineConfiguration" class="...SomeProcessEngineConfigurationClass">
+  ...
+  <property name="configurators">
+    <list>
+	  <bean class="org.activiti.management.jmx.JMXConfigurator">
+
+	    <property name="connectorPort" value="1912" />
+        <property name="serviceUrlPath" value="/jmxrmi/activiti" />
+
+		...
+      </bean>
+    </list>
+  </property>
+</bean>
+```
+
+下表显示了您可以配置哪些参数及其默认值：
+
+| Name            | Default value           | Description                                        |
+| --------------- | ----------------------- | -------------------------------------------------- |
+| disabled        | false                   | 如果设置，即使存在依赖项，JMX 也不会启动           |
+| domain          | org.activiti.jmx.Mbeans | Domain of MBean                                    |
+| createConnector | true                    | 如果为 true，则为启动的 MbeanServer 创建一个连接器 |
+| MBeanDomain     | DefaultDomain           | domain of MBean server                             |
+| registryPort    | 1099                    | 作为注册端口出现在服务 URL 中                      |
+| serviceUrlPath  | /jmxrmi/activiti        | appears in the service URL                         |
+| connectorPort   | -1                      | 如果大于零，将作为连接器端口出现在服务 URL 中      |
+
+#### 1.5.JMX服务URL
+
+JMX 服务 URL 具有以下格式：
+
+```
+service:jmx:rmi://<hostName>:<connectorPort>/jndi/rmi://<hostName>:<registryPort>/<serviceUrlPath>
+```
+
+hostName 将自动设置为机器的网络名称。可以配置 connectorPort、registryPort 和 serviceUrlPath。
+
+如果 connectionPort 小于零，则服务 URL 的相应部分将被删除并简化为：
+
+```
+service:jmx:rmi:///jndi/rmi://:<hostname>:<registryPort>/<serviceUrlPath>
+```
+
+### 2.Maven 原型
+
+#### 2.1.创建测试用例
+
+在开发过程中，有时在实际应用程序中实现一个想法或功能之前，创建一个小的测试用例来测试它是有帮助的。这有助于隔离被测对象。 JUnit 测试用例也是用于交流错误报告和功能请求的首选工具。将测试用例附加到错误报告或功能请求 jira 问题，大大减少了其修复时间。
+
+为了便于创建测试用例，可以使用 maven 原型。通过使用这种原型，可以快速创建标准测试用例。原型应该已经在标准存储库中可用。如果没有，您只需在 tooling/archtypes 文件夹中键入 mvn install 即可轻松将其安装在本地 maven 存储库文件夹中。
+
+以下命令创建单元测试项目：
+
+```
+mvn archetype:generate \
+-DarchetypeGroupId=org.activiti \
+-DarchetypeArtifactId=activiti-archetype-unittest \
+-DarchetypeVersion=<current version> \
+-DgroupId=org.myGroup \
+-DartifactId=myArtifact
+```
+
+每个参数的作用如下表所示：
+
+Unittest 生成原型参数
+
+| Row  | Parameter           | Explanation                                                  |
+| ---- | ------------------- | ------------------------------------------------------------ |
+| 1    | archetypeGroupId    | Group id of the archetype. should be **org.activiti**        |
+| 2    | archetypeArtifactId | Artifact if of the archetype. should be **activiti-archetype-unittest** |
+| 3    | archetypeVersion    | Activiti version used in the generated test project          |
+| 4    | groupId             | Group id of the generated test project                       |
+| 5    | artifactId          | Artifact id of the generated test project                    |
+
+生成的项目的目录结构如下：
+
+```
+.
+├── pom.xml
+└── src
+    └── test
+        ├── java
+        │   └── org
+        │       └── myGroup
+        │           └── MyUnitTest.java
+        └── resources
+            ├── activiti.cfg.xml
+            ├── log4j.properties
+            └── org
+                └── myGroup
+                    └── my-process.bpmn20.xml
+```
+
+您可以修改 java 单元测试用例及其对应的流程模型，或者添加新的测试用例和流程模型。如果您使用该项目来阐明错误或功能，则测试用例最初应该会失败。在修复所需的错误或实现所需的功能后，它应该会通过。在发送之前，请确保通过键入 mvn clean 来清理项目。

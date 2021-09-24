@@ -5,6 +5,7 @@ import com.shaoteemo.listener.MyEventListener;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.impl.cfg.DelegateExpressionFieldInjectionMode;
 import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;
+import org.activiti.engine.impl.history.HistoryLevel;
 import org.activiti.engine.runtime.Clock;
 import org.activiti.engine.test.ActivitiRule;
 import org.activiti.spring.SpringAsyncExecutor;
@@ -17,6 +18,11 @@ import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager;
+import org.springframework.orm.jpa.persistenceunit.PersistenceUnitManager;
+import org.springframework.orm.jpa.vendor.AbstractJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
@@ -111,6 +117,21 @@ public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration {
         //配置流程引擎为禁用在委托表达式上使用字段注入(用于规范安全的Java Service中字段的安全注入。详见文档：Java服务任务)
 //        configuration.setDelegateExpressionFieldInjectionMode(DelegateExpressionFieldInjectionMode.DISABLED);
 
+        /*JPA配置*/
+        //数据库配置
+//        configuration.setDatabaseSchemaUpdate("true");
+//        configuration.setJdbcUrl("jdbc:h2:mem:JpaVariableTest;DB_CLOSE_DELAY=1000");
+//        configuration.setJpaPersistenceUnitName("activiti-jpa-pu");
+//        configuration.setJpaHandleTransaction(true);
+//        configuration.setJpaCloseEntityManager(true);
+        //job Executor 配置yml
+        //邮件服务
+//        configuration.setMailServerPort(5025);
+
+        /*History配置*/
+//        configuration.setHistory(HistoryLevel.AUDIT.getKey());
+
+
         return configuration;
     }
 
@@ -125,6 +146,19 @@ public class ActivitiConfig extends AbstractProcessEngineAutoConfiguration {
         ActivitiRule activitiRule = new ActivitiRule();
         activitiRule.setProcessEngine(processEngine);
         return activitiRule;
+    }*/
+
+    /*JPA EntityManagerFactoryBean*/
+    /*@Bean
+    public LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean(
+            LocalContainerEntityManagerFactoryBean bean , DefaultPersistenceUnitManager pum , AbstractJpaVendorAdapter jpaVendorAdapter
+    ){
+
+        bean.setPersistenceUnitManager(pum);
+
+        jpaVendorAdapter.setDatabasePlatform("org.apache.openjpa.jdbc.sql.H2Dictionary");
+        bean.setJpaVendorAdapter(JpaVendorAdapter);
+        return bean;
     }*/
 
 }

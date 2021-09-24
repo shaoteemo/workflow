@@ -11,6 +11,8 @@ spring:
     check-process-definitions: false
     history-level: full
     database-schema-update: flase
+    #异步执行
+#    async-executor-activate: false
 
 
 logging:
