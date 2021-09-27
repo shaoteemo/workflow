@@ -1,3 +1,5 @@
+
+
 # Activiti指南（Alpha）
 
 ## 写在前面
@@ -428,17 +430,107 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 2.部署流程并启动实例3.通过TaskService检索任务，可根据用户检索，也可以根据组检索。（此处演示不适用。详见官方文档演示步骤。此处将以API调用的方式创建组和用户。并与之关联详见代码。）4.领取任务（适用于组）5.根据TaskID完成任务
 ```
 
-## BPMN2.0详解
+## BPMN2.0构造
 
-写在前面：介绍Activiti支持的BPMN20构造以及对BPMN标准的自定义扩展
+本章涵盖了 Activiti 支持的 BPMN 20 构造以及对 BPMN 标准的自定义扩展。
 
-### 		Events
+### 自定义扩展
+
+BPMN 2.0 标准对所有相关方来说都是一件好事。最终用户不会因依赖专有解决方案而受到供应商锁定的影响。框架，尤其是像 Activiti 这样的开源框架，可以实现一个解决方案，该解决方案与大供应商的解决方案具有相同（并且通常实现得更好；-）的特性。由于 BPMN 2.0 标准，从如此大的供应商解决方案到 Activiti 的过渡是一条简单而平稳的道路。
+
+然而，标准的不利之处在于，它始终是不同公司（通常是愿景）之间多次讨论和妥协的结果。作为阅读流程定义的 BPMN 2.0 XML 的开发人员，有时会觉得某些构造或做事方式太麻烦。由于 Activiti 将易于开发作为首要任务，我们引入了称为 Activiti BPMN 扩展的东西。这些扩展是新的构造或简化某些未在 BPMN 2.0 规范中的构造的方法。
+
+尽管 BPMN 2.0 规范明确指出它是为自定义扩展而制作的，但我们确保：
+
+- 这种自定义扩展的先决条件是始终必须对标准的做事方式进行简单的转换。因此，当您决定使用自定义扩展时，您不必担心没有退路。
+- 当使用自定义扩展时，总是通过为新的 XML 元素、属性等提供 activiti: namespace 前缀来清楚地表明这一点。
+
+因此，是否要使用自定义扩展完全取决于您。有几个因素会影响这个决定（图形编辑器的使用、公司规定等）。我们只提供它们，因为我们相信标准中的某些点可以更简单或更有效地完成。随时就我们的扩展向我们提供（正面和（或）负面）反馈，或发布自定义扩展的新想法。谁知道，有一天你的想法可能会出现在规范中！
+
+### 		事件
+
+事件：用于对生命周期过程发生的事情进行建模。图标总是一个⚪.在BPMN2.0中事件主要有如下两种类别。	
+
+1. 捕获：通过未填充的内部图标（即白色），捕捉事件与投掷事件在视觉上有所区别。
+2. 抛出：通过填充黑色的内部图标在视觉上与捕获事件区分开来。
+
+#### 1.事件定义
+
+事件定义了事件的语义。如果没有事件定义，事件“没有什么特别之处”。例如，没有触发事件定义的开始事件，没有指定以什么方式开始。如果我们将事件定义添加到开始事件（例如定时器事件定义），我们声明什么“类型”的事件启动进程。
+
+#### 2.定时器事件定义（TimerEventDefinition）
+
+定时器事件是由定义的定时器触发的事件。它们可以用作开始事件、中间事件或边界事件。时间事件的行为取决于所使用的业务日历。每个计时器事件都有一个默认的业务日历，但也可以在计时器事件定义上定义业务日历。
+
+```xml
+<timerEventDefinition activiti:businessCalendarName="custom">
+    ...
+</timerEventDefinition>
+```
+
+其中 businessCalendarName 指向流程引擎配置中的业务日历。当省略业务日历时，将使用默认业务日历。
+
+计时器定义必须仅包含以下元素之一：
+
+- **timeDate**： 此格式以 ISO 8601 格式指定固定日期，何时触发触发器。例子：
+
+  ```xml
+  <timerEventDefinition>
+      <timeDate>2011-03-11T12:13:14</timeDate>
+  </timerEventDefinition>
+  ```
+
+- **timeDuration**：要指定计时器在触发之前应该运行多长时间，可以将 timeDuration 指定为 timerEventDefinition 的子元素。使用的格式是 ISO 8601 格式（根据 BPMN 2.0 规范的要求）。示例（间隔持续 10 天）：
+
+  ```xml
+  <timerEventDefinition>
+      <timeDuration>P10D</timeDuration>
+  </timerEventDefinition>
+  ```
+
+- **timeCycle**：指定重复间隔，这对于定期启动流程或为过期的用户任务发送多个提醒很有用。时间周期元素可以有两种格式。首先是 ISO 8601 标准规定的循环持续时间格式。示例（3 个重复间隔，每个持续 10 小时）：
+
+还可以将 endDate 指定为 timeCycle 上的可选属性，或者指定在时间表达式的末尾，如下所示：R3/PT10H/${EndDate}。当到达结束日期时，应用程序将停止为此任务创建其他作业。它接受静态值 ISO 8601 标准（例如“2015-02-25T16:42:11+00:00”）或变量 ${EndDate} 作为值。
+
+```xml
+<timerEventDefinition>
+    <timeCycle activiti:endDate="2015-02-25T16:42:11+00:00">R3/PT10H</timeCycle>
+</timerEventDefinition>
+```
+
+```xml
+<timerEventDefinition>
+    <timeCycle>R3/PT10H/${EndDate}</timeCycle>
+</timerEventDefinition>
+```
+
+如果两者都被指定，则系统将使用指定为属性的结束日期。
+
+目前只有 BoundaryTimerEvents 和 CatchTimerEvent 支持 EndDate 功能。
+
+此外，您可以使用 cron 表达式指定时间周期，下面的示例显示触发器每 5 分钟触发一次，从整小时开始：
 
 ```
-事件：用于对生命周期过程发生的事情进行建模。图标总是一个⚪.在BPMN2.0中事件主要有如下两种类别。	1.捕获：通过未填充的内部图标（即白色），捕捉事件与投掷事件在视觉上有所区别。	2.抛出：通过填充黑色的内部图标在视觉上与捕获事件区分开来。
+0 0/5 * * * ?
 ```
 
-#### 1.定时器事件定义（TimerEventDefinition）
+注意：第一个符号表示秒，而不是普通 Unix cron 中的分钟。
+
+循环持续时间更适合处理相对计时器，这些计时器是针对某个特定时间点（例如用户任务启动的时间）计算的，而 cron 表达式可以处理绝对计时器 - 这对于计时器启动事件特别有用。
+
+您可以使用计时器事件定义的表达式，这样您就可以根据流程变量影响计时器定义。流程变量必须包含适用于适当计时器类型的 ISO 8601（或循环类型的 cron）字符串。
+
+```xml
+<boundaryEvent id="escalationTimer" cancelActivity="true" attachedToRef="firstLineSupport">
+  <timerEventDefinition>
+    <timeDuration>${duration}</timeDuration>
+  </timerEventDefinition>
+</boundaryEvent>
+```
+
+注意：计时器仅在启用作业或异步执行器时触发（即需要在 activiti.cfg.xml 中将 jobExecutorActivate 或 asyncExecutorActivate 设置为 true，因为默认情况下禁用作业和异步执行器）。
+
+本节统一的代码：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -513,7 +605,9 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 -->
 ```
 
-#### 2.错误事件定义（ErrorEventDefinition）
+#### 3.错误事件定义（ErrorEventDefinition）
+
+重要提示：BPMN 错误与 Java 异常不同。事实上，两者没有任何共同之处。 BPMN 错误事件是一种对业务异常建模的方法。 Java 异常以它们自己的特定方式处理。
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -541,7 +635,96 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 
 ```
 
-#### 3.信号事件定义（SignalEventDefinition）
+#### 4.信号事件定义（SignalEventDefinition）
+
+信号事件是引用命名信号的事件。信号是全局范围的事件（广播语义），并被传递给所有活动的处理程序（等待流程实例/捕获信号事件）。
+
+信号事件定义是使用 signalEventDefinition 元素声明的。属性signalRef 引用声明为definitions根元素的子元素的信号元素。以下是信号事件被中间事件抛出并捕获的过程的摘录。
+
+```xml
+<definitions... >
+	<!-- declaration of the signal -->
+	<signal id="alertSignal" name="alert" />
+
+	<process id="catchSignal">
+		<intermediateThrowEvent id="throwSignalEvent" name="Alert">
+			<!-- signal event definition -->
+			<signalEventDefinition signalRef="alertSignal" />
+		</intermediateThrowEvent>
+		...
+		<intermediateCatchEvent id="catchSignalEvent" name="On Alert">
+			<!-- signal event definition -->
+			<signalEventDefinition signalRef="alertSignal" />
+		</intermediateCatchEvent>
+		...
+	</process>
+</definitions>
+```
+
+signalEventDefinitions 引用相同的 signal 元素。
+
+##### 抛出信号事件
+
+信号可以由流程实例使用 BPMN 构造抛出，也可以使用 Java API 以编程方式抛出。 org.activiti.engine.RuntimeService 上的以下方法可用于以编程方式抛出信号：
+
+```java
+RuntimeService.signalEventReceived(String signalName);
+RuntimeService.signalEventReceived(String signalName, String executionId);
+```
+
+signalEventReceived(String signalName); 的区别和 signalEventReceived(String signalName, String executionId);是第一种方法将信号全局抛出到所有订阅的处理程序（广播语义），而第二种方法仅将信号传递给特定的执行。
+
+##### 捕捉信号事件
+
+信号事件可以被中间捕获信号事件或信号边界事件捕获。
+
+##### 查询信号事件订阅
+
+可以查询已订阅特定信号事件的所有执行：
+
+```java
+List<Execution> executions = runtimeService.createExecutionQuery()
+      .signalEventSubscriptionName("alert")
+      .list();
+```
+
+然后我们可以使用 signalEventReceived(String signalName, String executionId) 方法将信号传递给这些执行。
+
+##### 信号事件范围
+
+默认情况下，信号是广播过程引擎范围的。这意味着您可以在流程实例中抛出一个信号事件，其他具有不同流程定义的流程实例可以对这个事件的发生做出反应。
+
+但是，有时只希望对同一流程实例中的信号事件做出反应。例如，一个用例是流程实例中的同步机制，如果两个或多个活动是互斥的。
+
+要限制信号事件的范围，请将（非 BPMN 2.0 标准！）范围属性添加到信号事件定义中：
+
+```xml
+<signal id="alertSignal" name="alert" activiti:scope="processInstance"/>
+```
+
+此属性的默认值为“*global*”。
+
+##### 信号事件示例
+
+以下是使用信号进行通信的两个独立进程的示例。如果更新或更改保险单，则开始第一个流程。在人类参与者审查更改后，将抛出一个信号事件，表示策略已更改：
+
+![](http://rep.shaoteemo.com/bpmn.signal.event.throw.png)
+
+此事件现在可以被所有相关的流程实例捕获。以下是订阅事件的流程示例。
+
+![](http://rep.shaoteemo.com/bpmn.signal.event.catch.png)
+
+注意：了解信号事件广播到所有活动处理程序很重要。这意味着在上面给出的示例的情况下，捕获信号的进程的所有实例都将接收事件。在这种情况下，这就是我们想要的。但是，也存在广播行为是无意的情况。比如下面的流程：
+
+![](http://rep.shaoteemo.com/bpmn.signal.event.warning.1.png)
+
+BPMN 不支持上述流程中描述的模式。这个想法是在执行“do something”任务时抛出的错误被边界错误事件捕获，并将使用信号抛出事件传播到并行执行路径，然后中断“do something in parallel”任务。到目前为止，Activiti 将按预期执行。该信号将传播到捕获边界事件并中断任务。**但是，由于信号的广播语义，它也将传播到所有其他订阅了信号事件的流程实例。**在这种情况下，这可能不是我们想要的结果。
+
+注意：信号事件不执行与特定流程实例的任何类型的关联。相反，它被广播到所有流程实例。如果您只需要向特定流程实例传递信号，请手动执行关联并使用 `signalEventReceived(String signalName, String executionId)` 和适当的查询机制。
+
+Activiti 确实有办法解决这个问题，通过将范围属性添加到信号事件并将其设置为 processInstance。
+
+本节统一的代码：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -605,7 +788,90 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 -->
 ```
 
-#### 4.消息事件定义（MeaasgeEventDefinition）
+#### 5.消息事件定义（MeaasgeEventDefinition）
+
+消息事件是引用命名消息的事件。消息具有名称和有效载荷。与信号不同，消息事件总是针对单个接收者。
+
+使用 `messageEventDefinition` 元素声明消息事件定义。属性 `messageRef` 引用声明为`definitions`根元素的子元素的`message`元素。下面是一个过程的摘录，其中两个消息事件被一个开始事件和一个中间捕获消息事件声明和引用。
+
+```xml
+<definitions id="definitions"
+  xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:activiti="http://activiti.org/bpmn"
+  targetNamespace="Examples"
+  xmlns:tns="Examples">
+
+  <message id="newInvoice" name="newInvoiceMessage" />
+  <message id="payment" name="paymentMessage" />
+
+  <process id="invoiceProcess">
+
+    <startEvent id="messageStart" >
+    	<messageEventDefinition messageRef="newInvoice" />
+    </startEvent>
+    ...
+    <intermediateCatchEvent id="paymentEvt" >
+    	<messageEventDefinition messageRef="payment" />
+    </intermediateCatchEvent>
+    ...
+  </process>
+
+</definitions>
+```
+
+##### 抛出消息事件
+
+作为一个可嵌入的流程引擎，Activiti 并不关心实际接收消息。这将取决于环境并需要特定于平台的活动，例如连接到 JMS（Java 消息服务）Queue/Topic或处理 Webservice 或 REST 请求。因此，您必须将消息的接收作为嵌入流程引擎的应用程序或基础架构的一部分来实现。
+
+在您的应用程序中收到一条消息后，您必须决定如何处理它。如果消息应触发新流程实例的启动，请在运行时服务提供的以下方法之间进行选择：
+
+```java
+ProcessInstance startProcessInstanceByMessage(String messageName);
+ProcessInstance startProcessInstanceByMessage(String messageName, Map<String, Object> processVariables);
+ProcessInstance startProcessInstanceByMessage(String messageName, String businessKey, Map<String, Object> processVariables);
+```
+
+这些方法允许使用引用的消息启动流程实例。
+
+如果消息需要由现有流程实例接收，您首先必须将消息与特定流程实例相关联（参见下一节），然后触发等待执行后继续。runtime service提供以下基于消息事件订阅触发执行的方法：
+
+```java
+void messageEventReceived(String messageName, String executionId);
+void messageEventReceived(String messageName, String executionId, HashMap<String, Object> processVariables);
+```
+
+##### 查询消息事件订阅
+
+- 在消息开始事件的情况下，消息事件订阅与特定流程定义相关联。可以使用 ProcessDefinitionQuery 查询此类消息订阅：
+
+  ```java
+  ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+        .messageEventSubscription("newCallCenterBooking")
+        .singleResult();
+  ```
+
+  由于特定消息订阅只能有一个流程定义，因此查询始终返回零个或一个结果。如果流程定义被更新，只有最新版本的流程定义订阅了消息事件。
+
+- 在中间捕获消息事件的情况下，消息事件订阅与特定执行相关联。可以使用 `ExecutionQuery` 查询此类消息事件订阅：
+
+  ```java
+  Execution execution = runtimeService.createExecutionQuery()
+        .messageEventSubscriptionName("paymentReceived")
+        .variableValueEquals("orderId", message.getOrderId())
+        .singleResult();
+  ```
+
+  此类查询称为关联查询，通常需要有关流程的知识（在这种情况下，给定的 orderId 最多只有一个流程实例）。
+
+##### 消息事件示例
+
+以下是可以使用两种不同消息启动的进程示例：
+
+![](http://rep.shaoteemo.com/bpmn.start.message.event.example.1.png)
+
+如果流程需要其他方式来对不同的开始事件做出反应，但最终以统一的方式继续，这将非常有用。
+
+本节统一代码示例
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -650,7 +916,34 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 -->
 ```
 
-#### 5.开始事件（StartEvents）
+#### 6.开始事件（StartEvents）
+
+开始事件指示流程开始的位置。启动事件的类型（进程在消息到达时启动，在特定的时间间隔等），定义了进程的启动方式，在事件的可视化表示中显示为一个小图标。在 XML 表示中，类型由子元素的声明给出。
+
+开始事件总是捕获：从概念上讲，事件是（在任何时候）等待某个触发器发生。
+
+在开始事件中，可以指定以下 Activiti 特定的属性：
+
+- **initiator**: 标识在进程启动时将存储经过身份验证的用户 ID 的变量名称。例子：
+
+  ```xml
+  <startEvent id="request" activiti:initiator="initiator" />
+  ```
+
+  必须使用方法 `IdentityService.setAuthenticatedUserId(String)` 在 try-finally 块中设置经过身份验证的用户，如下所示：
+
+  ```java
+  try {
+    identityService.setAuthenticatedUserId("bono");
+    runtimeService.startProcessInstanceByKey("someProcessKey");
+  } finally {
+    identityService.setAuthenticatedUserId(null);
+  }
+  ```
+
+  此代码已嵌入到 Activiti Explorer 应用程序中。因此它可以与 Forms 结合使用。
+
+本节统一代码示例
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -682,9 +975,41 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 <!--关联的Java:com.shaoteemo.bpmn.StartEventImpl-->
 ```
 
-#### 6.空开始事件（None Start Event）常用的一个事件
+#### 7.空开始事件（None Start Event）常用的一个事件
+
+##### 描述
+
+从技术上讲，空启动事件意味着未指定启动流程实例的触发器。这意味着引擎无法预测流程实例何时必须启动。当流程实例通过调用 startProcessInstanceByXXX 方法之一通过 API 启动时，将使用无启动事件。
+
+```java
+ProcessInstance processInstance = runtimeService.startProcessInstanceByXXX();
+```
+
+注意：子流程总是有一个无开始事件。
+
+##### 图形示例
+
+空开始事件被可视化为一个没有内部图标的圆圈（即没有触发器类型）。
 
 ![空开始事件](http://rep.shaoteemo.com/activiti/bpmn.none.start.event.png)
+
+##### XML示例
+
+空开始事件的 XML 表示是正常的开始事件声明，没有任何子元素（其他开始事件类型都有一个声明类型的子元素）。
+
+```xml
+<startEvent id="start" name="my start event" />
+```
+
+##### 空开始事件的自定义扩展
+
+formKey：对用户在启动新流程实例时必须填写的表单模板的引用。更多信息可以在表格部分找到示例：
+
+```xml
+<startEvent id="request" activiti:formKey="org/activiti/examples/taskforms/request.form" />
+```
+
+本节统一代码示例
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -720,9 +1045,49 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 
 ```
 
-#### 7.定时器启动事件（Timer Start Event)
+#### 8.定时器启动事件（Timer Start Event)
+
+##### 描述
+
+计时器启动事件用于在给定时间创建流程实例。它既可以用于应该只启动一次的流程，也可以用于应该在特定时间间隔启动的流程。
+
+注意：子进程不能有计时器启动事件。
+
+注意：一旦部署流程，就会安排启动计时器事件。不需要调用startProcessInstanceByXXX，虽然调用start进程方法没有限制，会在startProcessInstanceByXXX调用的时候多启动一次流程。
+
+注意：当部署了具有启动计时器事件的新版本进程时，将删除与前一个计时器对应的作业。原因是通常不希望自动启动这个旧版本流程的新流程实例。
+
+##### 图形示例
+
+空开始事件显示为带有时钟内部图标的圆圈。
 
 ![定时器图片样式](http://rep.shaoteemo.com/activiti/bpmn.clock.start.event.png)
+
+##### XML代码示例
+
+定时器启动事件的 XML 表示是普通的启动事件声明，带有定时器定义子元素。有关配置详细信息，请参阅定时器定义。
+
+示例：进程将从 2011 年 3 月 11 日 12:13 开始，以 5 分钟为间隔启动 4 次
+
+```xml
+<startEvent id="theStart">
+  <timerEventDefinition>
+    <timeCycle>R4/2011-03-11T12:13/PT5M</timeCycle>
+</timerEventDefinition>
+</startEvent>
+```
+
+示例：进程将在选定日期开始一次
+
+```xml
+<startEvent id="theStart">
+  <timerEventDefinition>
+    <timeDate>2011-03-11T12:13:14</timeDate>
+  </timerEventDefinition>
+</startEvent>
+```
+
+本节统一代码示例
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -766,9 +1131,68 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 
 ```
 
-#### 8.消息开始事件（Message Start Event）
+#### 9.消息开始事件（Message Start Event）
+
+##### 描述
+
+消息启动事件可用于使用命名消息启动流程实例。这有效地允许我们使用消息名称从一组替代启动事件中选择正确的启动事件。
+
+使用一个或多个消息启动事件部署流程定义时，有以下注意事项：
+
+- 消息启动事件的名称在给定的流程定义中必须是唯一的。流程定义不能有多个同名的消息启动事件。Activiti 在部署流程定义时抛出异常，如果两个或多个消息启动事件引用具有相同消息名称的消息，则两个或多个消息启动事件引用相同的消息。
+- 消息启动事件的名称在所有部署的流程定义中必须是唯一的。Activiti 在部署流程定义时抛出异常，使得一个或多个消息启动事件引用与已由不同流程定义部署的消息启动事件同名的消息。
+- 流程版本控制：在部署流程定义的新版本时，取消先前版本的消息订阅。对于新版本中不存在的消息事件也是如此。
+
+启动流程实例时，可以使用 RuntimeService 上的以下方法触发消息启动事件：
+
+```java
+ProcessInstance startProcessInstanceByMessage(String messageName);
+ProcessInstance startProcessInstanceByMessage(String messageName, Map<String, Object> processVariables);
+ProcessInstance startProcessInstanceByMessage(String messageName, String businessKey, Map<String, Object< processVariables);
+```
+
+`messageName` 是在 `messageEventDefinition` 的 `messageRef` 属性引用的消息元素的 `name` 属性中给出的名称。启动流程实例时，有以下注意事项：
+
+- 消息启动事件仅在顶级进程上受支持。嵌入式子进程不支持消息启动事件。
+- 如果流程定义有多个消息启动事件，`runtimeService.startProcessInstanceByMessage(… )` 允许选择适当的启动事件。
+- 如果流程定义有多个消息启动事件和一个空启动事件，`runtimeService.startProcessInstanceByKey(… )` 和 `runtimeService.startProcessInstanceById(… )` 使用空启动事件启动流程实例。
+- 如果流程定义有多个消息启动事件并且没有空启动事件，`runtimeService.startProcessInstanceByKey(… )` 和 `runtimeService.startProcessInstanceById(… )` 会抛出异常。
+- 如果流程定义具有单个消息启动事件，则 `runtimeService.startProcessInstanceByKey(… )` 和 `untimeService.startProcessInstanceById(… )` 使用消息启动事件启动新流程实例。
+- 如果流程是从活动调用启动的，则仅在以下情况下才支持消息启动事件
+  - 除了消息开始事件之外，流程还有一个空开始事件
+  - 该流程只有一个消息启动事件，没有其他启动事件。
+
+##### 图形示例
+
+消息开始事件显示为带有消息事件符号的圆圈。该符号未填充，以可视化捕捉（接收）行为。
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.start.message.event.png)
+
+##### XML代码示例
+
+消息开始事件的 XML 表示是带有 messageEventDefinition 子元素的正常开始事件声明：
+
+```xml
+<definitions id="definitions"
+  xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:activiti="http://activiti.org/bpmn"
+  targetNamespace="Examples"
+  xmlns:tns="Examples">
+
+  <message id="newInvoice" name="newInvoiceMessage" />
+
+  <process id="invoiceProcess">
+
+    <startEvent id="messageStart" >
+    	<messageEventDefinition messageRef="tns:newInvoice" />
+    </startEvent>
+    ...
+  </process>
+
+</definitions>
+```
+
+本节统一代码示例
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -830,9 +1254,21 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 </definitions>
 ```
 
-#### 9.信号开始事件（Signal Start Event）
+#### 10.信号开始事件（Signal Start Event）
+
+##### 描述
+
+信号启动事件可用于使用命名信号启动流程实例。可以使用中间信号抛出事件或通过 API（runtimeService.signalEventReceivedXXX 方法）从流程实例内触发信号。在这两种情况下，将启动具有相同名称的信号启动事件的所有流程定义。
+
+##### 图形示例
+
+信号开始事件被可视化为带有信号事件符号的圆圈。该符号未填充，以可视化捕捉（接收）行为。
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.start.signal.event.png)
+
+##### XML代码示例
+
+信号开始事件的 XML 表示是带有 signalEventDefinition 子元素的正常开始事件声明：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -873,9 +1309,23 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 </definitions>
 ```
 
-#### 10.错误开始事件（Error Start Event）
+#### 11.错误开始事件（Error Start Event）
+
+##### 描述
+
+错误启动事件可用于触发事件子流程。错误启动事件不能用于启动流程实例。
+
+错误启动事件总是中断。
+
+##### 图形示例
+
+错误开始事件显示为带有错误事件符号的圆圈。该符号未填充，以可视化捕捉（接收）行为。
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.start.error.event.png)
+
+##### XML代码示例
+
+错误开始事件的 XML 表示是带有 errorEventDefinition 子元素的正常开始事件声明：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -906,13 +1356,23 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 
 ```
 
-#### 11.结束事件（End Events）
+#### 12.结束事件（End Events）
 
-结束事件表示（子）流程的（路径的）结束。结束事件总是抛出。这意味着当流程执行到达结束事件时，会抛出一个结果。结果的类型由事件的内部黑色图标描述。
+结束事件表示（子）流程的（路径的）结束。结束事件总是抛出。这意味着当流程执行到达结束事件时，会抛出一个结果。结果的类型由事件的内部黑色图标表示。在 XML 表示中，类型由子元素的声明给出。
 
-#### 12.空结束事件（None End Event）
+#### 13.空结束事件（None End Event）
+
+##### 描述
+
+空结束事件意味着到达事件时抛出的结果是未指定的。因此，除了结束当前的执行路径外，引擎不会做任何额外的事情。
+
+##### 图形示例
+
+空结束事件被可视化为一个带有粗边框且没有内部图标（无结果类型）的圆圈。
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.none.end.event.png)
+
+##### XML代码示例
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -938,9 +1398,61 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 </definitions>
 ```
 
-#### 13.错误结束事件（Error End Event）
+#### 14.错误结束事件（Error End Event）
+
+##### 描述
+
+当流程执行到达错误结束事件时，当前执行路径结束并抛出错误。此错误可以被匹配的中间边界错误事件捕获。如果没有找到匹配的边界错误事件，则会抛出异常。
+
+##### 图形示例
+
+错误结束事件可视化为典型的结束事件（带粗边框的圆圈），内部带有错误图标。错误图标是全黑的，表示抛出语义。
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.error.end.event.png)
+
+##### XML代码示例
+
+错误结束事件表示为结束事件，带有一个 errorEventDefinition 子元素。
+
+```xml
+<endEvent id="myErrorEndEvent">
+  <errorEventDefinition errorRef="myError" />
+</endEvent>
+```
+
+errorRef 属性可以引用在进程外定义的错误元素：
+
+```xml
+<error id="myError" errorCode="123" />
+...
+<process id="myProcess">
+...
+```
+
+错误的 errorCode 将用于查找匹配的捕获边界错误事件。如果 errorRef 与任何定义的错误都不匹配，则 errorRef 用作 errorCode 的快捷方式。这是一个 Activiti 特定的快捷方式。更具体地说，以下代码段在功能上是等效的。
+
+```xml
+<error id="myError" errorCode="error123" />
+...
+<process id="myProcess">
+...
+  <endEvent id="myErrorEndEvent">
+    <errorEventDefinition errorRef="myError" />
+  </endEvent>
+...
+```
+
+相当于
+
+```xml
+<endEvent id="myErrorEndEvent">
+  <errorEventDefinition errorRef="error123" />
+</endEvent>
+```
+
+请注意，errorRef 必须符合 BPMN 2.0 模式，并且必须是有效的 QName。
+
+本节统一代码示例
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -994,9 +1506,25 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 </definitions>
 ```
 
-#### 14.终止结束事件（Terminate End Event）
+#### 15.终止结束事件（Terminate End Event）
+
+##### 描述
+
+当达到终止结束事件时，当前流程实例或子流程将被终止。从概念上讲，当执行到达终止结束事件时，将确定并结束第一个范围（流程或子流程）。请注意，在 BPMN 2.0 中，子流程可以是嵌入式子流程、调用活动、事件子流程或事务子流程。这个规则一般适用：例如当有一个多实例调用活动或嵌入的子流程时，只有那个实例会被结束，其他实例和流程实例不受影响。
+
+有一个可选属性 terminateAll 可以添加。当为true，无论终止结束事件在流程定义中的位置如何，也无论是否在子流程（甚至嵌套）中，（根）流程实例都将被终止。
+
+##### 图形示例
+
+取消结束事件可视化为典型的结束事件（带有粗轮廓的圆圈），里面有一个完整的黑色圆圈。
 
 ![](http://rep.shaoteemo.com/activiti/bpmn.terminate.end.event.png)
+
+##### XML代码示例
+
+终止结束事件表示为结束事件，带有一个 terminateEventDefinition 子元素。
+
+请注意， terminateAll 属性是可选的（默认为 false）。
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1039,9 +1567,23 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 </definitions>
 ```
 
-#### 15.取消结束事件（Cancel End Event）
+#### 16.取消结束事件（Cancel End Event）
+
+[[EXPERIMENTAL\]](https://www.activiti.org/userguide/#experimental)
+
+##### 描述
+
+取消结束事件只能与 bpmn 事务子流程结合使用。当到达取消结束事件时，将抛出取消事件，该事件必须由取消边界事件捕获。然后取消边界事件取消事务并触发补偿。
+
+##### 图形示例
+
+取消结束事件可视化为典型的结束事件（带有粗轮廓的圆圈），里面有取消图标。取消图标是完全黑色的，表示抛出语义。
 
 ![](http://rep.shaoteemo.com/activiti/%E5%8F%96%E6%B6%88%E7%BB%93%E6%9D%9F%E4%BA%8B%E4%BB%B6.png)
+
+##### XML代码示例
+
+取消结束事件表示为结束事件，带有一个 cancelEventDefinition 子元素。
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1072,6 +1614,10 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
 ### Boundary Events
 
 #### 1.边界事件（Boundary Events）
+
+边界事件捕获附加到活动的事件（边界事件永远不会抛出）。这意味着当活动正在运行时，事件正在侦听某种类型的触发器。当事件被捕获时，活动被中断并遵循从事件传出的序列流。
+
+所有边界事件都以相同的方式定义：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -1105,6 +1651,12 @@ Activiti没有版本控制相关概念。流程定义的版本是在部署期间
     </process>
 </definitions>
 ```
+
+边界事件定义为
+
+- 唯一标识符（进程范围内）
+- 对通过attachedToRef 属性将事件附加到的活动的引用。请注意，边界事件与它们所依附的活动在同一级别上定义（即，活动中不包含边界事件）。
+- 定义边界事件类型的 XXXEventDefinition 形式的 XML 子元素（例如 TimerEventDefinition、ErrorEventDefinition 等）。有关更多详细信息，请参阅特定的边界事件类型。
 
 #### 2.定时器边界事件（Timer Boundary Event）
 
